@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { profiles, problems } from "./models/ProblemRegistry";
 import { LocalProcessRunner } from "./services/LocalProcessRunner";
 import { SubmissionRecord } from "./models/types";
+import { dbService } from "./services/DatabaseService";
 
 const app = express();
 app.use(cors());
@@ -12,15 +13,21 @@ app.use(express.json());
 const runner = new LocalProcessRunner();
 const PORT = process.env.PORT || 3001;
 
-// In-memory submissions db
-const submissions: Record<string, SubmissionRecord> = {};
+// GET /problems - list of available problems
+app.get("/problems", (req, res) => {
+  const problemList = Object.values(problems).map(p => ({
+    id: p.id,
+    title: p.title,
+    profileId: p.profileId
+  }));
+  res.json(problemList);
+});
 
 // GET /problems/:id - for frontend to render problem description
 app.get("/problems/:id", (req, res) => {
   const problem = problems[req.params.id];
   if (!problem) return res.status(404).json({ error: "Problem not found" });
   
-  // Return without testcases data for security, though it's a demo
   res.json({
     id: problem.id,
     title: problem.title,
@@ -32,7 +39,6 @@ app.get("/problems/:id", (req, res) => {
 app.get("/profiles/:id", (req, res) => {
   const profile = profiles[req.params.id];
   if (!profile) return res.status(404).json({ error: "Profile not found" });
-  // Skip returning the command functions, just configs
   res.json({
     id: profile.id,
     displayName: profile.displayName,
@@ -45,7 +51,7 @@ app.get("/profiles/:id", (req, res) => {
 });
 
 app.post("/run", async (req, res) => {
-  const { code, profileId } = req.body;
+  const { code, profileId, stdin } = req.body;
   const profile = profiles[profileId];
 
   if (!profile) {
@@ -62,12 +68,13 @@ app.post("/run", async (req, res) => {
     createdAt: new Date().toISOString(),
     status: "running"
   };
-  submissions[attemptId] = submissionRecord;
 
   try {
-    const result = await runner.executeRun(code, profile);
+    const result = await runner.executeRun(code, profile, stdin);
     submissionRecord.status = "graded";
     submissionRecord.result = result;
+    
+    dbService.saveSubmission(submissionRecord);
     
     res.json({
       attemptId,
@@ -99,7 +106,7 @@ app.post("/submit", async (req, res) => {
     createdAt: new Date().toISOString(),
     status: "running"
   };
-  submissions[attemptId] = submissionRecord;
+  (submissionRecord as any).problemId = problemId;
 
   try {
     const testResults = [];
@@ -112,7 +119,6 @@ app.post("/submit", async (req, res) => {
       const actualOutput = execResult.stdout.trim();
       const expectedOutput = tc.expectedOutput.trim();
       
-      // Simple exact match grading strategy
       const passed = actualOutput === expectedOutput && execResult.exitCode === 0;
       if (passed) passedTests++;
 
@@ -123,7 +129,7 @@ app.post("/submit", async (req, res) => {
         actualOutput,
         passed,
         executionTimeMs: execResult.executionTimeMs,
-        stderr: execResult.stderr // capturing stderr for debugging
+        stderr: execResult.stderr
       });
     }
 
@@ -141,6 +147,8 @@ app.post("/submit", async (req, res) => {
     submissionRecord.status = "graded";
     submissionRecord.result = finalResult;
 
+    dbService.saveSubmission(submissionRecord);
+
     res.json(finalResult);
 
   } catch (error: any) {
@@ -149,8 +157,12 @@ app.post("/submit", async (req, res) => {
   }
 });
 
+app.get("/submissions", (req, res) => {
+  res.json(dbService.getAllSubmissions());
+});
+
 app.get("/submissions/:id", (req, res) => {
-  const sub = submissions[req.params.id];
+  const sub = dbService.getSubmission(req.params.id);
   if (!sub) return res.status(404).json({ error: "Not found "});
   res.json(sub);
 });

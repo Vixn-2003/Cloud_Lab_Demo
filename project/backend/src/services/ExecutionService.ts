@@ -8,6 +8,6 @@ export interface ExecutionResult {
 }
 
 export interface ExecutionService {
-  executeRun(code: string, profile: ExecutionProfile): Promise<ExecutionResult>;
+  executeRun(code: string, profile: ExecutionProfile, stdin?: string): Promise<ExecutionResult>;
   executeSubmit(code: string, input: string, profile: ExecutionProfile): Promise<ExecutionResult>;
 }

@@ -7,10 +7,18 @@ import { ExecutionProfile } from "../models/types";
 import { ExecutionService, ExecutionResult } from "./ExecutionService";
 
 export class LocalProcessRunner implements ExecutionService {
-  private createTempFile(code: string, extension: string): string {
+  private createTempFile(code: string, profile: ExecutionProfile): string {
     const tempDir = os.tmpdir();
-    const fileName = `runner_${uuidv4()}${extension}`;
-    const filePath = path.join(tempDir, fileName);
+    // Special handling for Java: filename must be Main.java if we expect public class Main
+    const fileName = profile.id === "java_basic" 
+      ? `Main_${uuidv4().substring(0, 8)}.java` // Keeping it somewhat unique
+      : `runner_${uuidv4()}${profile.extension}`;
+    
+    // Actually, for Java, if we use javac, it's better to create a clean subdir
+    const sessionDir = path.join(tempDir, `session_${uuidv4()}`);
+    fs.mkdirSync(sessionDir, { recursive: true });
+    
+    const filePath = path.join(sessionDir, profile.id === "java_basic" ? "Main.java" : fileName);
     fs.writeFileSync(filePath, code, "utf8");
     return filePath;
   }
@@ -18,26 +26,29 @@ export class LocalProcessRunner implements ExecutionService {
   private runProcess(
     commandArgs: string[],
     input: string | null,
-    timeoutMs: number
+    timeoutMs: number,
+    cwd?: string
   ): Promise<ExecutionResult> {
     return new Promise((resolve) => {
       const startTime = Date.now();
       const command = commandArgs[0];
       const args = commandArgs.slice(1);
 
-      const child = spawn(command, args, { stdio: ["pipe", "pipe", "pipe"] });
+      const child = spawn(command, args, { 
+        stdio: ["pipe", "pipe", "pipe"],
+        cwd: cwd || os.tmpdir()
+      });
 
       let stdout = "";
       let stderr = "";
 
-      // Timeout handling
       const timeoutTimer = setTimeout(() => {
         child.kill();
         resolve({
           stdout,
           stderr: stderr + "\nError: Execution Timed Out.",
           executionTimeMs: Date.now() - startTime,
-          exitCode: 124, // Timed out
+          exitCode: 124,
         });
       }, timeoutMs);
 
@@ -68,28 +79,63 @@ export class LocalProcessRunner implements ExecutionService {
     });
   }
 
-  async executeRun(code: string, profile: ExecutionProfile): Promise<ExecutionResult> {
-    const filePath = this.createTempFile(code, profile.extension);
+  async executeRun(code: string, profile: ExecutionProfile, stdin?: string): Promise<ExecutionResult> {
+    const filePath = this.createTempFile(code, profile);
+    const sessionDir = path.dirname(filePath);
     try {
-      // Ignore build step for simplicity in python run
-      const command = profile.runCommand(filePath);
-      return await this.runProcess(command, null, profile.timeoutMs);
-    } finally {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      // Build Step
+      if (profile.buildCommand) {
+        const buildCmd = profile.buildCommand(filePath);
+        const buildRes = await this.runProcess(buildCmd, null, 10000, sessionDir);
+        if (buildRes.exitCode !== 0) {
+          return {
+            stdout: "",
+            stderr: "Build Error:\n" + buildRes.stderr,
+            executionTimeMs: buildRes.executionTimeMs,
+            exitCode: buildRes.exitCode
+          };
+        }
       }
+
+      // Run Step
+      const command = profile.runCommand(filePath);
+      return await this.runProcess(command, stdin || null, profile.timeoutMs, sessionDir);
+    } finally {
+      // Cleanup session dir
+      try {
+        if (fs.existsSync(sessionDir)) {
+          fs.rmSync(sessionDir, { recursive: true, force: true });
+        }
+      } catch (e) {}
     }
   }
 
   async executeSubmit(code: string, input: string, profile: ExecutionProfile): Promise<ExecutionResult> {
-    const filePath = this.createTempFile(code, profile.extension);
+    const filePath = this.createTempFile(code, profile);
+    const sessionDir = path.dirname(filePath);
     try {
-      const command = profile.testCommand(filePath);
-      return await this.runProcess(command, input, profile.timeoutMs);
-    } finally {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      // Build Step
+      if (profile.buildCommand) {
+        const buildCmd = profile.buildCommand(filePath);
+        const buildRes = await this.runProcess(buildCmd, null, 10000, sessionDir);
+        if (buildRes.exitCode !== 0) {
+          return {
+            stdout: "",
+            stderr: "Build Error:\n" + buildRes.stderr,
+            executionTimeMs: buildRes.executionTimeMs,
+            exitCode: buildRes.exitCode
+          };
+        }
       }
+
+      const command = profile.testCommand(filePath);
+      return await this.runProcess(command, input, profile.timeoutMs, sessionDir);
+    } finally {
+      try {
+        if (fs.existsSync(sessionDir)) {
+          fs.rmSync(sessionDir, { recursive: true, force: true });
+        }
+      } catch (e) {}
     }
   }
 }

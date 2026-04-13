@@ -4,6 +4,12 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:3001';
 
+interface ProblemSummary {
+  id: string;
+  title: string;
+  profileId: string;
+}
+
 interface Problem {
   id: string;
   title: string;
@@ -21,40 +27,66 @@ interface ProfileSummary {
   gradingStrategy: string;
 }
 
+const DEFAULT_CODE: Record<string, string> = {
+  python: 'import sys\n\n# Read from stdin\n# for line in sys.stdin:\n#     print(line)\n\nprint("Hello World")',
+  javascript: 'const fs = require("fs");\n\n// Read from stdin\n// const input = fs.readFileSync(0, "utf8");\n\nconsole.log("Hello Node.js");',
+  cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Hello C++" << std::endl;\n    return 0;\n}',
+  java: 'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello Java");\n    }\n}'
+};
+
 function App() {
+  const [problems, setProblems] = useState<ProblemSummary[]>([]);
+  const [selectedProblemId, setSelectedProblemId] = useState<string>('');
   const [problem, setProblem] = useState<Problem | null>(null);
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
-  const [code, setCode] = useState<string>('# Write your code here\nimport sys\n\n');
+  const [code, setCode] = useState<string>('');
+  const [stdin, setStdin] = useState<string>('');
   const [runResult, setRunResult] = useState<any>(null);
   const [submitResult, setSubmitResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'problem' | 'run' | 'submit'>('problem');
 
+  // Fetch problems list on mount
   useEffect(() => {
-    // Fetch problem "sum_two_numbers"
-    axios.get(`${API_BASE}/problems/sum_two_numbers`).then(res => {
-      setProblem(res.data);
-      // Fetch profile
-      axios.get(`${API_BASE}/profiles/${res.data.profileId}`).then(pRes => {
-        setProfile(pRes.data);
-      });
+    axios.get(`${API_BASE}/problems`).then(res => {
+      setProblems(res.data);
+      if (res.data.length > 0) {
+        setSelectedProblemId(res.data[0].id);
+      }
     });
   }, []);
+
+  // Fetch problem details and profile when selectedProblemId changes
+  useEffect(() => {
+    if (!selectedProblemId) return;
+
+    setLoading(true);
+    axios.get(`${API_BASE}/problems/${selectedProblemId}`).then(res => {
+      setProblem(res.data);
+      axios.get(`${API_BASE}/profiles/${res.data.profileId}`).then(pRes => {
+        const prof = pRes.data;
+        setProfile(prof);
+        // Set default code for the language if editor is empty or just changing problem type
+        setCode(DEFAULT_CODE[prof.language] || '');
+        setLoading(false);
+      });
+    }).catch(() => setLoading(false));
+  }, [selectedProblemId]);
 
   const handleRun = async () => {
     if (!problem) return;
     setLoading(true);
     setActiveTab('run');
-    setSubmitResult(null); // clear submit result when running
+    setSubmitResult(null);
     try {
       const res = await axios.post(`${API_BASE}/run`, {
         code,
-        language: profile?.language || 'python',
-        profileId: problem.profileId
+        profileId: problem.profileId,
+        stdin
       });
       setRunResult(res.data);
     } catch (err: any) {
-      setRunResult({ error: err.message });
+      setRunResult({ error: err.response?.data?.error || err.message });
     }
     setLoading(false);
   };
@@ -63,67 +95,89 @@ function App() {
     if (!problem) return;
     setLoading(true);
     setActiveTab('submit');
-    setRunResult(null); // clear run result when submitting
+    setRunResult(null);
     try {
       const res = await axios.post(`${API_BASE}/submit`, {
         code,
-        language: profile?.language || 'python',
         profileId: problem.profileId,
         problemId: problem.id
       });
       setSubmitResult(res.data);
     } catch (err: any) {
-      setSubmitResult({ error: err.message });
+      setSubmitResult({ error: err.response?.data?.error || err.message });
     }
     setLoading(false);
   };
 
   return (
-    <div className="flex h-screen bg-slate-900 text-slate-200">
+    <div className="flex h-screen bg-slate-900 text-slate-200 overflow-hidden">
       {/* Left Panel: Problem & Results */}
       <div className="w-1/2 flex flex-col border-r border-slate-700">
         
-        {/* Header Tabs */}
-        <div className="flex border-b border-slate-700 bg-slate-800">
-          <button 
-            className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'problem' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-            onClick={() => setActiveTab('problem')}
-          >
-            Description
-          </button>
-          <button 
-            className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'run' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-            onClick={() => setActiveTab('run')}
-          >
-            Test Run Result
-          </button>
-          <button 
-            className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'submit' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-            onClick={() => setActiveTab('submit')}
-          >
-            Submission Result
-          </button>
+        {/* Header Tabs & Problem Selector */}
+        <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800 pr-4">
+          <div className="flex">
+            <button 
+              className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'problem' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+              onClick={() => setActiveTab('problem')}
+            >
+              Description
+            </button>
+            <button 
+              className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'run' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+              onClick={() => setActiveTab('run')}
+            >
+              Test Run
+            </button>
+            <button 
+              className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'submit' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+              onClick={() => setActiveTab('submit')}
+            >
+              Grading Result
+            </button>
+          </div>
+          <div>
+            <select 
+              value={selectedProblemId}
+              onChange={(e) => setSelectedProblemId(e.target.value)}
+              className="bg-slate-700 text-slate-200 text-xs px-2 py-1 rounded border border-slate-600 outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {problems.map(p => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Panel Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-6 scrollbar-thin scrollbar-thumb-slate-700">
           {activeTab === 'problem' && (
             <div>
-              <h1 className="text-2xl font-bold mb-4">{problem?.title || 'Loading...'}</h1>
-              <div className="prose prose-invert max-w-none whitespace-pre-wrap mb-8">
+              <h1 className="text-2xl font-black mb-4">{problem?.title || 'Loading...'}</h1>
+              <div className="prose prose-invert max-w-none whitespace-pre-wrap mb-8 text-slate-300 leading-relaxed">
                 {problem?.statement}
               </div>
 
-              {/* Execution Profile Summary */}
               {profile && (
-                <div className="mt-8 p-4 bg-slate-800 rounded-lg border border-slate-700 shadow-sm">
-                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-3">Execution Profile Summary</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><span className="text-slate-500">Language:</span> <span className="font-semibold text-slate-300">{profile.displayName}</span></div>
-                    <div><span className="text-slate-500">Version:</span> <span className="font-semibold text-slate-300">{profile.version}</span></div>
-                    <div><span className="text-slate-500">OS Family:</span> <span className="font-semibold text-slate-300">{profile.osFamily}</span></div>
-                    <div><span className="text-slate-500">Timeout:</span> <span className="font-semibold text-slate-300">{profile.timeoutMs}ms</span></div>
-                    <div className="col-span-2"><span className="text-slate-500">Grading Strategy:</span> <span className="font-semibold text-slate-300">{profile.gradingStrategy}</span></div>
+                <div className="mt-8 p-4 bg-slate-800/50 rounded-lg border border-slate-700 shadow-sm">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Execution Environment</h3>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-xs font-medium">
+                    <div className="flex justify-between border-b border-slate-700/50 pb-1">
+                      <span className="text-slate-500 italic">Language</span> 
+                      <span className="text-blue-300">{profile.displayName}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-700/50 pb-1">
+                      <span className="text-slate-500 italic">Version</span> 
+                      <span className="text-slate-300">{profile.version}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-700/50 pb-1">
+                      <span className="text-slate-500 italic">Policy</span> 
+                      <span className="text-slate-300">Local isolation</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-700/50 pb-1">
+                      <span className="text-slate-500 italic">Time Limit</span> 
+                      <span className="text-slate-300">{profile.timeoutMs}ms</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -131,95 +185,110 @@ function App() {
           )}
 
           {activeTab === 'run' && (
-            <div>
+            <div className="flex flex-col h-full">
+              <div className="mb-6">
+                <h3 className="text-sm font-bold text-slate-400 mb-2 uppercase tracking-wide">Manual Stdin Input</h3>
+                <textarea 
+                  value={stdin}
+                  onChange={(e) => setStdin(e.target.value)}
+                  placeholder="Enter input data here to test your code..."
+                  className="w-full h-24 bg-slate-950 border border-slate-700 rounded p-3 text-sm font-mono text-slate-300 focus:border-blue-500 outline-none transition-all placeholder:text-slate-700 shadow-inner"
+                />
+              </div>
+
               <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                Execution Output (Mode: RUN)
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
+                Console Output
               </h2>
+              
               {loading ? (
-                <div className="text-slate-400 animate-pulse">Executing code...</div>
+                <div className="text-slate-500 animate-pulse font-mono text-sm italic">Executing process...</div>
               ) : runResult ? (
-                <div className="bg-black p-4 rounded text-green-400 font-mono text-sm whitespace-pre-wrap shadow-inner overflow-x-auto">
+                <div className="bg-black p-5 rounded-lg border border-slate-800 text-green-400 font-mono text-sm whitespace-pre-wrap shadow-2xl relative overflow-x-auto">
                   {runResult.error ? (
                     <span className="text-red-500">{runResult.error}</span>
                   ) : (
                     <>
-                      <div className="mb-2 text-slate-500">-- STDOUT --</div>
-                      {runResult.result.stdout || <span className="text-slate-600 italic">No output</span>}
+                      <div className="opacity-30 mb-2 select-none"># stdout</div>
+                      {runResult.result.stdout || <span className="text-slate-700 italic opacity-50">Empty stdout</span>}
+                      
                       {runResult.result.stderr && (
                         <>
-                          <div className="mt-4 mb-2 text-red-500">-- STDERR --</div>
-                          <div className="text-red-400">{runResult.result.stderr}</div>
+                          <div className="mt-4 mb-2 opacity-30 select-none text-red-500"># stderr</div>
+                          <div className="text-red-400/90">{runResult.result.stderr}</div>
                         </>
                       )}
                       
-                      <div className="mt-6 pt-4 border-t border-slate-800 text-slate-500 text-xs">
-                        Execution Time: {runResult.result.executionTimeMs}ms | Exit Code: {runResult.result.exitCode}
+                      <div className="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-[10px] text-slate-600 tracking-wider">
+                        <span>TIME: {runResult.result.executionTimeMs}ms</span>
+                        <span>STATUS: {runResult.result.exitCode === 0 ? 'SUCCESS' : `EXIT ${runResult.result.exitCode}`}</span>
                       </div>
                     </>
                   )}
                 </div>
               ) : (
-                <div className="text-slate-500">Click "Run" to test your code.</div>
+                <div className="text-slate-600 italic text-sm">No output yet. Click "Play" in the code editor to run.</div>
               )}
             </div>
           )}
 
           {activeTab === 'submit' && (
             <div>
-              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
-                Grading Report (Mode: SUBMIT)
+              <h2 className="text-xl font-black mb-6 flex items-center gap-2 text-white">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></span>
+                Evaluation Result
               </h2>
               {loading ? (
-                <div className="text-slate-400 animate-pulse">Grading testcases...</div>
+                <div className="text-slate-500 animate-pulse italic font-mono text-sm">Grading binary...</div>
               ) : submitResult ? (
-                <div>
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                   {submitResult.error ? (
-                    <div className="text-red-500">{submitResult.error}</div>
+                    <div className="p-4 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
+                      <span className="font-bold">Error:</span> {submitResult.error}
+                    </div>
                   ) : (
                     <>
-                      <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800 border-l-4 border-purple-500 mb-6 shadow-sm">
-                        <div>
-                          <p className="text-sm text-slate-400 uppercase tracking-wide font-bold">Total Score</p>
-                          <p className="text-3xl font-black text-white">{submitResult.score}/100</p>
+                      <div className="flex items-center justify-between p-6 rounded-xl bg-slate-800 border border-slate-700 mb-8 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-1 opacity-5 group-hover:opacity-10 transition-opacity">
+                          <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-slate-400">Passed: {submitResult.passedTests}/{submitResult.totalTests}</p>
-                          <p className="text-xs text-slate-500">Status: {submitResult.status}</p>
+                        <div className="relative">
+                          <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Session Performance</p>
+                          <p className="text-5xl font-black text-white">{submitResult.score}<span className="text-xl text-slate-600">/100</span></p>
+                        </div>
+                        <div className="text-right relative">
+                          <p className="text-lg font-black text-slate-300">{submitResult.passedTests} <span className="text-slate-600 font-medium">OF</span> {submitResult.totalTests}</p>
+                          <p className="text-[10px] text-purple-400 font-bold tracking-widest uppercase">Verified Cases</p>
                         </div>
                       </div>
 
                       <div className="space-y-4">
                         {submitResult.testResults?.map((tc: any) => (
-                          <div key={tc.index} className={`p-4 rounded-lg border ${tc.passed ? 'border-green-800 bg-green-900/20' : 'border-red-800 bg-red-900/20'}`}>
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="font-bold text-sm text-slate-300">Testcase {tc.index}</span>
+                          <div key={tc.index} className={`p-4 rounded-lg border transition-all ${tc.passed ? 'border-green-900/40 bg-green-900/10' : 'border-red-900/40 bg-red-900/10'}`}>
+                            <div className="flex justify-between items-center mb-4">
+                              <span className="font-black text-xs text-slate-500 tracking-wider">CASE #{tc.index}</span>
                               {tc.passed ? (
-                                <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded">PASSED</span>
+                                <span className="text-[10px] font-black text-green-500 border border-green-500/50 px-2 py-0.5 rounded uppercase">Passed</span>
                               ) : (
-                                <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded">FAILED</span>
+                                <span className="text-[10px] font-black text-red-500 border border-red-500/50 px-2 py-0.5 rounded uppercase">Failed</span>
                               )}
                             </div>
-                            <div className="grid grid-cols-2 gap-4 text-xs font-mono mt-2">
-                              <div>
-                                <div className="text-slate-500 mb-1">Input:</div>
-                                <div className="bg-black/50 p-2 rounded text-slate-300">{tc.input}</div>
+                            <div className="grid grid-cols-2 gap-4 text-xs font-mono mb-4">
+                              <div className="space-y-1">
+                                <div className="text-[10px] text-slate-600 font-bold">INPUT</div>
+                                <div className="bg-black/60 p-2 rounded text-slate-400 overflow-x-auto">{tc.input}</div>
                               </div>
-                              <div>
-                                <div className="text-slate-500 mb-1">Expected:</div>
-                                <div className="bg-black/50 p-2 rounded text-slate-300">{tc.expectedOutput}</div>
-                              </div>
-                            </div>
-                            <div className="mt-3 text-xs font-mono">
-                              <div className="text-slate-500 mb-1">Actual Output:</div>
-                              <div className={`p-2 rounded bg-black/50 ${tc.passed ? 'text-green-400' : 'text-red-400'}`}>
-                                {tc.actualOutput || <span className="italic opacity-50">Empty</span>}
-                                {tc.stderr && <div className="mt-2 text-red-500">STDERR: {tc.stderr}</div>}
+                              <div className="space-y-1">
+                                <div className="text-[10px] text-slate-600 font-bold">EXPECTED</div>
+                                <div className="bg-black/60 p-2 rounded text-slate-400 overflow-x-auto">{tc.expectedOutput}</div>
                               </div>
                             </div>
-                            <div className="mt-3 text-right text-[10px] text-slate-500">
-                              Time: {tc.executionTimeMs}ms
+                            <div className="space-y-1 font-mono text-xs">
+                              <div className="text-[10px] text-slate-600 font-bold">PROCESS OUTPUT</div>
+                              <div className={`p-3 rounded bg-black/80 ${tc.passed ? 'text-green-500/90' : 'text-red-400/90'} border-l-2 ${tc.passed ? 'border-green-500' : 'border-red-500'}`}>
+                                {tc.actualOutput || <span className="italic opacity-30 select-none">null_ptr</span>}
+                                {tc.stderr && <div className="mt-3 pt-3 border-t border-red-900/50 text-[10px] text-red-500/80 leading-relaxed font-sans">{tc.stderr}</div>}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -228,7 +297,7 @@ function App() {
                   )}
                 </div>
               ) : (
-                <div className="text-slate-500">Click "Submit" to grade your code against all testcases.</div>
+                <div className="text-slate-600 italic text-sm">Grading binary not yet evaluated. Click "Submit" to benchmark.</div>
               )}
             </div>
           )}
@@ -238,38 +307,50 @@ function App() {
       {/* Right Panel: Editor */}
       <div className="w-1/2 flex flex-col bg-[#1e1e1e]">
         <div className="flex justify-between items-center p-3 border-b border-slate-700 bg-slate-800">
-          <div className="text-sm font-semibold flex items-center gap-2">
-            <span className="text-blue-400">~/</span>
-            <span className="text-slate-300">main{profile?.extension || '.py'}</span>
+          <div className="text-xs font-bold font-mono flex items-center gap-3">
+            <div className="flex gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-red-500/50 border border-red-500/20"></span>
+              <span className="w-3 h-3 rounded-full bg-yellow-500/50 border border-yellow-500/20"></span>
+              <span className="w-3 h-3 rounded-full bg-green-500/50 border border-green-500/20"></span>
+            </div>
+            <span className="opacity-40 text-slate-500">PROJECT</span>
+            <span className="text-blue-400/80">Main{profile?.extension || '.py'}</span>
           </div>
           <div className="flex gap-3">
             <button 
               onClick={handleRun}
               disabled={loading}
-              className="px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm font-semibold transition-colors disabled:opacity-50"
+              className="px-5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 shadow-lg"
             >
-              Play (Run)
+              Play
             </button>
             <button 
               onClick={handleSubmit}
               disabled={loading}
-              className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 shadow-lg shadow-indigo-500/20"
             >
-              Grade (Submit)
+              Benchmark
             </button>
           </div>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <Editor
             height="100%"
-            defaultLanguage="python"
+            language={profile?.language || 'python'}
             theme="vs-dark"
             value={code}
             onChange={(val) => setCode(val || '')}
             options={{
               minimap: { enabled: false },
               fontSize: 14,
-              padding: { top: 16 }
+              fontFamily: "'Fira Code', 'Monaco', monospace",
+              padding: { top: 20 },
+              cursorBlinking: 'smooth',
+              smoothScrolling: true,
+              scrollbar: {
+                vertical: 'hidden',
+                horizontal: 'hidden'
+              }
             }}
           />
         </div>
