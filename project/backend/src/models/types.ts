@@ -16,9 +16,21 @@ export interface ExecutionProfile {
   gradingStrategy: string;
 }
 
-export interface ProblemConfig {
+export interface Faculty {
   id: string;
   title: string;
+}
+
+export interface Subject {
+  id: string;
+  title: string;
+  facultyId: string;
+}
+
+export interface LabConfig {
+  id: string;
+  title: string;
+  subjectId: string;
   profileId: string;
   statement: string;
   testcases: {

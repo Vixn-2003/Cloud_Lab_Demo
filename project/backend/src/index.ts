@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
-import { profiles, problems } from "./models/ProblemRegistry";
+import { profiles, faculties, subjects, labs } from "./models/ProblemRegistry";
 import { LocalProcessRunner } from "./services/LocalProcessRunner";
 import { SubmissionRecord } from "./models/types";
 import { dbService } from "./services/DatabaseService";
@@ -13,27 +13,45 @@ app.use(express.json());
 const runner = new LocalProcessRunner();
 const PORT = process.env.PORT || 3001;
 
-// GET /problems - list of available problems
-app.get("/problems", (req, res) => {
-  const problemList = Object.values(problems).map(p => ({
-    id: p.id,
-    title: p.title,
-    profileId: p.profileId
-  }));
-  res.json(problemList);
+// GET /faculties - list of all faculties
+app.get("/faculties", (req, res) => {
+  res.json(faculties);
 });
 
-// GET /problems/:id - for frontend to render problem description
-app.get("/problems/:id", (req, res) => {
-  const problem = problems[req.params.id];
-  if (!problem) return res.status(404).json({ error: "Problem not found" });
+// GET /subjects - list subjects, optional filter by facultyId
+app.get("/subjects", (req, res) => {
+  const { facultyId } = req.query;
+  if (facultyId) {
+    const filtered = subjects.filter(s => s.facultyId === facultyId);
+    return res.json(filtered);
+  }
+  res.json(subjects);
+});
+
+// GET /labs - list lab summaries, optional filter by subjectId
+app.get("/labs", (req, res) => {
+  const { subjectId } = req.query;
+  let labList = Object.values(labs);
   
-  res.json({
-    id: problem.id,
-    title: problem.title,
-    statement: problem.statement,
-    profileId: problem.profileId
-  });
+  if (subjectId) {
+    labList = labList.filter(l => l.subjectId === subjectId);
+  }
+  
+  const summaries = labList.map(l => ({
+    id: l.id,
+    title: l.title,
+    subjectId: l.subjectId,
+    profileId: l.profileId
+  }));
+  
+  res.json(summaries);
+});
+
+// GET /labs/:id - detailed lab config
+app.get("/labs/:id", (req, res) => {
+  const lab = labs[req.params.id];
+  if (!lab) return res.status(404).json({ error: "Lab not found" });
+  res.json(lab);
 });
 
 app.get("/profiles/:id", (req, res) => {
@@ -88,12 +106,12 @@ app.post("/run", async (req, res) => {
 });
 
 app.post("/submit", async (req, res) => {
-  const { code, profileId, problemId } = req.body;
+  const { code, profileId, labId } = req.body;
   const profile = profiles[profileId];
-  const problem = problems[problemId];
+  const lab = labs[labId];
 
-  if (!profile || !problem) {
-    return res.status(400).json({ error: "Invalid profile or problem" });
+  if (!profile || !lab) {
+    return res.status(400).json({ error: "Invalid profile or lab" });
   }
 
   const attemptId = uuidv4();
@@ -106,14 +124,14 @@ app.post("/submit", async (req, res) => {
     createdAt: new Date().toISOString(),
     status: "running"
   };
-  (submissionRecord as any).problemId = problemId;
+  (submissionRecord as any).labId = labId; // Updated from problemId
 
   try {
     const testResults = [];
     let passedTests = 0;
 
-    for (let i = 0; i < problem.testcases.length; i++) {
-      const tc = problem.testcases[i];
+    for (let i = 0; i < lab.testcases.length; i++) {
+      const tc = lab.testcases[i];
       const execResult = await runner.executeSubmit(code, tc.input, profile);
       
       const actualOutput = execResult.stdout.trim();
@@ -133,14 +151,14 @@ app.post("/submit", async (req, res) => {
       });
     }
 
-    const score = Math.round((passedTests / problem.testcases.length) * 100);
+    const score = Math.round((passedTests / lab.testcases.length) * 100);
 
     const finalResult = {
       status: "graded",
       mode: "submit",
       score,
       passedTests,
-      totalTests: problem.testcases.length,
+      totalTests: lab.testcases.length,
       testResults
     };
 

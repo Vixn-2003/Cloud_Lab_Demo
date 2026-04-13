@@ -15,7 +15,7 @@ export class DatabaseService {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS submissions (
         id TEXT PRIMARY KEY,
-        problem_id TEXT NOT NULL,
+        lab_id TEXT NOT NULL,
         profile_id TEXT NOT NULL,
         mode TEXT NOT NULL,
         code TEXT NOT NULL,
@@ -31,13 +31,13 @@ export class DatabaseService {
   saveSubmission(record: SubmissionRecord): void {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO submissions 
-      (id, problem_id, profile_id, mode, code, language, status, score, result_json, created_at)
+      (id, lab_id, profile_id, mode, code, language, status, score, result_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
       record.id,
-      (record as any).problemId || "", // We might need to ensure problemId is in the record
+      (record as any).labId || "",
       record.profileId,
       record.mode,
       record.code,
@@ -55,6 +55,7 @@ export class DatabaseService {
 
     return {
       id: row.id,
+      labId: row.lab_id, // Added mapping
       mode: row.mode,
       code: row.code,
       language: row.language,
@@ -62,13 +63,14 @@ export class DatabaseService {
       createdAt: row.created_at,
       status: row.status,
       result: JSON.parse(row.result_json)
-    } as SubmissionRecord;
+    } as any;
   }
 
   getAllSubmissions(): SubmissionRecord[] {
     const rows = this.db.prepare("SELECT * FROM submissions ORDER BY created_at DESC").all() as any[];
     return rows.map(row => ({
       id: row.id,
+      labId: row.lab_id, // Added mapping
       mode: row.mode,
       code: row.code,
       language: row.language,
@@ -76,7 +78,7 @@ export class DatabaseService {
       createdAt: row.created_at,
       status: row.status,
       result: JSON.parse(row.result_json)
-    } as SubmissionRecord));
+    } as any));
   }
 }
 

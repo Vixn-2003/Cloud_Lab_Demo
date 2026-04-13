@@ -4,13 +4,25 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:3001';
 
-interface ProblemSummary {
+interface Faculty {
   id: string;
   title: string;
+}
+
+interface Subject {
+  id: string;
+  title: string;
+  facultyId: string;
+}
+
+interface LabSummary {
+  id: string;
+  title: string;
+  subjectId: string;
   profileId: string;
 }
 
-interface Problem {
+interface Lab {
   id: string;
   title: string;
   statement: string;
@@ -35,10 +47,17 @@ const DEFAULT_CODE: Record<string, string> = {
 };
 
 function App() {
-  const [problems, setProblems] = useState<ProblemSummary[]>([]);
-  const [selectedProblemId, setSelectedProblemId] = useState<string>('');
-  const [problem, setProblem] = useState<Problem | null>(null);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [labs, setLabs] = useState<LabSummary[]>([]);
+  
+  const [selectedFacultyId, setSelectedFacultyId] = useState<string>('');
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [selectedLabId, setSelectedLabId] = useState<string>('');
+  
+  const [lab, setLab] = useState<Lab | null>(null);
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
+  
   const [code, setCode] = useState<string>('');
   const [stdin, setStdin] = useState<string>('');
   const [runResult, setRunResult] = useState<any>(null);
@@ -46,42 +65,75 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'problem' | 'run' | 'submit'>('problem');
 
-  // Fetch problems list on mount
+  // Load faculties on mount
   useEffect(() => {
-    axios.get(`${API_BASE}/problems`).then(res => {
-      setProblems(res.data);
+    axios.get(`${API_BASE}/faculties`).then(res => {
+      setFaculties(res.data);
       if (res.data.length > 0) {
-        setSelectedProblemId(res.data[0].id);
+        setSelectedFacultyId(res.data[0].id);
       }
     });
   }, []);
 
-  // Fetch problem details and profile when selectedProblemId changes
+  // Load subjects when faculty changes
   useEffect(() => {
-    if (!selectedProblemId) return;
+    if (!selectedFacultyId) return;
+    axios.get(`${API_BASE}/subjects?facultyId=${selectedFacultyId}`).then(res => {
+      setSubjects(res.data);
+      if (res.data.length > 0) {
+        setSelectedSubjectId(res.data[0].id);
+      } else {
+        setSelectedSubjectId('');
+      }
+    });
+  }, [selectedFacultyId]);
+
+  // Load labs when subject changes
+  useEffect(() => {
+    if (!selectedSubjectId) {
+      setLabs([]);
+      setSelectedLabId('');
+      return;
+    }
+    axios.get(`${API_BASE}/labs?subjectId=${selectedSubjectId}`).then(res => {
+      setLabs(res.data);
+      if (res.data.length > 0) {
+        setSelectedLabId(res.data[0].id);
+      } else {
+        setSelectedLabId('');
+      }
+    });
+  }, [selectedSubjectId]);
+
+  // Load Lab details and profile when Lab changes
+  useEffect(() => {
+    if (!selectedLabId) {
+      setLab(null);
+      setProfile(null);
+      return;
+    }
 
     setLoading(true);
-    axios.get(`${API_BASE}/problems/${selectedProblemId}`).then(res => {
-      setProblem(res.data);
+    axios.get(`${API_BASE}/labs/${selectedLabId}`).then(res => {
+      setLab(res.data);
       axios.get(`${API_BASE}/profiles/${res.data.profileId}`).then(pRes => {
         const prof = pRes.data;
         setProfile(prof);
-        // Set default code for the language if editor is empty or just changing problem type
         setCode(DEFAULT_CODE[prof.language] || '');
         setLoading(false);
       });
     }).catch(() => setLoading(false));
-  }, [selectedProblemId]);
+  }, [selectedLabId]);
 
   const handleRun = async () => {
-    if (!problem) return;
+    if (!lab) return;
     setLoading(true);
     setActiveTab('run');
     setSubmitResult(null);
     try {
       const res = await axios.post(`${API_BASE}/run`, {
         code,
-        profileId: problem.profileId,
+        profileId: lab.profileId,
         stdin
       });
       setRunResult(res.data);
@@ -92,15 +144,15 @@ function App() {
   };
 
   const handleSubmit = async () => {
-    if (!problem) return;
+    if (!lab) return;
     setLoading(true);
     setActiveTab('submit');
     setRunResult(null);
     try {
       const res = await axios.post(`${API_BASE}/submit`, {
         code,
-        profileId: problem.profileId,
-        problemId: problem.id
+        profileId: lab.profileId,
+        labId: lab.id
       });
       setSubmitResult(res.data);
     } catch (err: any) {
@@ -111,41 +163,61 @@ function App() {
 
   return (
     <div className="flex h-screen bg-slate-900 text-slate-200 overflow-hidden">
-      {/* Left Panel: Problem & Results */}
+      {/* Left Panel: Lab & Results */}
       <div className="w-1/2 flex flex-col border-r border-slate-700">
         
-        {/* Header Tabs & Problem Selector */}
-        <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800 pr-4">
-          <div className="flex">
-            <button 
-              className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'problem' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-              onClick={() => setActiveTab('problem')}
-            >
-              Description
-            </button>
-            <button 
-              className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'run' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-              onClick={() => setActiveTab('run')}
-            >
-              Test Run
-            </button>
-            <button 
-              className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'submit' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
-              onClick={() => setActiveTab('submit')}
-            >
-              Grading Result
-            </button>
-          </div>
-          <div>
-            <select 
-              value={selectedProblemId}
-              onChange={(e) => setSelectedProblemId(e.target.value)}
-              className="bg-slate-700 text-slate-200 text-xs px-2 py-1 rounded border border-slate-600 outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              {problems.map(p => (
-                <option key={p.id} value={p.id}>{p.title}</option>
-              ))}
-            </select>
+        {/* Header Tabs with Cascading Dropdowns */}
+        <div className="border-b border-slate-700 bg-slate-800">
+          <div className="flex items-center justify-between pr-4">
+            <div className="flex">
+              <button 
+                className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'problem' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                onClick={() => setActiveTab('problem')}
+              >
+                Description
+              </button>
+              <button 
+                className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'run' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                onClick={() => setActiveTab('run')}
+              >
+                Test Run
+              </button>
+              <button 
+                className={`px-4 py-3 font-semibold text-sm outline-none transition-colors ${activeTab === 'submit' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-400 hover:text-slate-200'}`}
+                onClick={() => setActiveTab('submit')}
+              >
+                Grading Result
+              </button>
+            </div>
+            {/* Hierarchical Controls */}
+            <div className="flex items-center gap-3">
+              <select 
+                value={selectedFacultyId}
+                onChange={(e) => setSelectedFacultyId(e.target.value)}
+                className="bg-slate-700 text-slate-300 text-[10px] px-2 py-1 rounded border border-slate-600 outline-none focus:ring-1 focus:ring-blue-500 w-32"
+              >
+                <option value="" disabled>Select Faculty</option>
+                {faculties.map(f => <option key={f.id} value={f.id}>{f.title}</option>)}
+              </select>
+              <select 
+                value={selectedSubjectId}
+                onChange={(e) => setSelectedSubjectId(e.target.value)}
+                className="bg-slate-700 text-slate-300 text-[10px] px-2 py-1 rounded border border-slate-600 outline-none focus:ring-1 focus:ring-blue-500 w-32"
+                disabled={!selectedFacultyId}
+              >
+                <option value="" disabled>Select Subject</option>
+                {subjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+              </select>
+              <select 
+                value={selectedLabId}
+                onChange={(e) => setSelectedLabId(e.target.value)}
+                className="bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded border border-slate-600 outline-none focus:ring-1 focus:ring-blue-500 w-32"
+                disabled={!selectedSubjectId}
+              >
+                <option value="" disabled>Select Lab</option>
+                {labs.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -153,9 +225,9 @@ function App() {
         <div className="flex-1 overflow-auto p-6 scrollbar-thin scrollbar-thumb-slate-700">
           {activeTab === 'problem' && (
             <div>
-              <h1 className="text-2xl font-black mb-4">{problem?.title || 'Loading...'}</h1>
+              <h1 className="text-2xl font-black mb-4">{lab?.title || 'Loading...'}</h1>
               <div className="prose prose-invert max-w-none whitespace-pre-wrap mb-8 text-slate-300 leading-relaxed">
-                {problem?.statement}
+                {lab?.statement}
               </div>
 
               {profile && (
