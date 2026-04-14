@@ -70,6 +70,7 @@ app.get("/profiles/:id", (req, res) => {
 
 app.post("/run", async (req, res) => {
   const { code, profileId, stdin } = req.body;
+  console.log(`[POST /run] profileId=${profileId}`);
   const profile = profiles[profileId];
 
   if (!profile) {
@@ -100,6 +101,7 @@ app.post("/run", async (req, res) => {
       result
     });
   } catch (error: any) {
+    console.error(`[POST /run] Error: ${error.message}`, error);
     submissionRecord.status = "error";
     res.status(500).json({ error: error.message });
   }
@@ -107,6 +109,7 @@ app.post("/run", async (req, res) => {
 
 app.post("/submit", async (req, res) => {
   const { code, profileId, labId } = req.body;
+  console.log(`[POST /submit] profileId=${profileId}, labId=${labId}`);
   const profile = profiles[profileId];
   const lab = labs[labId];
 
@@ -170,6 +173,7 @@ app.post("/submit", async (req, res) => {
     res.json(finalResult);
 
   } catch (error: any) {
+    console.error(`[POST /submit] Error: ${error.message}`, error);
     submissionRecord.status = "error";
     res.status(500).json({ error: error.message });
   }

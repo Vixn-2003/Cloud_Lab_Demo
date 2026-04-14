@@ -27,6 +27,8 @@ interface Lab {
   title: string;
   statement: string;
   profileId: string;
+  environmentType: string;
+  toolset?: string[];
 }
 
 interface ProfileSummary {
@@ -230,17 +232,25 @@ function App() {
                 {lab?.statement}
               </div>
 
-              {profile && (
+              {profile && lab && (
                 <div className="mt-8 p-4 bg-slate-800/50 rounded-lg border border-slate-700 shadow-sm">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Execution Environment</h3>
                   <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-xs font-medium">
                     <div className="flex justify-between border-b border-slate-700/50 pb-1">
+                      <span className="text-slate-500 italic">Category</span> 
+                      <span className="text-purple-400">
+                        {lab.environmentType === 'single_runtime' && 'Single-runtime Environment'}
+                        {lab.environmentType === 'single_machine' && 'Single-machine Lab'}
+                        {lab.environmentType === 'multi_node' && 'Multi-node Cyber Range'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-700/50 pb-1">
                       <span className="text-slate-500 italic">Language</span> 
                       <span className="text-blue-300">{profile.displayName}</span>
                     </div>
-                    <div className="flex justify-between border-b border-slate-700/50 pb-1">
-                      <span className="text-slate-500 italic">Version</span> 
-                      <span className="text-slate-300">{profile.version}</span>
+                    <div className="flex justify-between border-b border-slate-700/50 pb-1 col-span-2">
+                      <span className="text-slate-500 italic">Required Tools</span> 
+                      <span className="text-slate-300">{lab.toolset?.join(', ') || 'Standard Runtime'}</span>
                     </div>
                     <div className="flex justify-between border-b border-slate-700/50 pb-1">
                       <span className="text-slate-500 italic">Policy</span> 

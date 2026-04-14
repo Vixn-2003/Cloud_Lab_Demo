@@ -23,6 +23,26 @@ export class LocalProcessRunner implements ExecutionService {
     return filePath;
   }
 
+  private cleanupSession(sessionDir: string) {
+    if (!fs.existsSync(sessionDir)) return;
+    
+    // On Windows, file locks can prevent immediate deletion.
+    // We try immediately, and if it fails, we don't block the response.
+    try {
+      fs.rmSync(sessionDir, { recursive: true, force: true });
+    } catch (err: any) {
+      console.error(`[Cleanup] Failed to remove session dir ${sessionDir}: ${err.message}`);
+      // Fallback: attempt again in a few seconds (fire and forget)
+      setTimeout(() => {
+        try {
+          if (fs.existsSync(sessionDir)) {
+            fs.rmSync(sessionDir, { recursive: true, force: true });
+          }
+        } catch (e) {}
+      }, 2000);
+    }
+  }
+
   private runProcess(
     commandArgs: string[],
     input: string | null,
@@ -34,9 +54,17 @@ export class LocalProcessRunner implements ExecutionService {
       const command = commandArgs[0];
       const args = commandArgs.slice(1);
 
+      const env = { ...process.env };
+      if (process.platform === "win32") {
+        const gitPath = "C:\\Program Files\\Git\\bin;C:\\Program Files\\Git\\usr\\bin";
+        const pathKey = Object.keys(env).find(k => k.toLowerCase() === "path") || "Path";
+        env[pathKey] = `${gitPath};${env[pathKey] || ""}`;
+      }
+
       const child = spawn(command, args, { 
         stdio: ["pipe", "pipe", "pipe"],
-        cwd: cwd || os.tmpdir()
+        cwd: cwd || os.tmpdir(),
+        env
       });
 
       let stdout = "";
@@ -51,6 +79,16 @@ export class LocalProcessRunner implements ExecutionService {
           exitCode: 124,
         });
       }, timeoutMs);
+
+      child.on("error", (err) => {
+        clearTimeout(timeoutTimer);
+        resolve({
+          stdout,
+          stderr: stderr + `\nSystem Error: Failed to start process '${command}'. Please ensure it is installed and in your PATH.\n(${err.message})`,
+          executionTimeMs: Date.now() - startTime,
+          exitCode: -1,
+        });
+      });
 
       child.stdout.on("data", (data: any) => {
         stdout += data.toString();
@@ -101,12 +139,7 @@ export class LocalProcessRunner implements ExecutionService {
       const command = profile.runCommand(filePath);
       return await this.runProcess(command, stdin || null, profile.timeoutMs, sessionDir);
     } finally {
-      // Cleanup session dir
-      try {
-        if (fs.existsSync(sessionDir)) {
-          fs.rmSync(sessionDir, { recursive: true, force: true });
-        }
-      } catch (e) {}
+      this.cleanupSession(sessionDir);
     }
   }
 
@@ -131,11 +164,7 @@ export class LocalProcessRunner implements ExecutionService {
       const command = profile.testCommand(filePath);
       return await this.runProcess(command, input, profile.timeoutMs, sessionDir);
     } finally {
-      try {
-        if (fs.existsSync(sessionDir)) {
-          fs.rmSync(sessionDir, { recursive: true, force: true });
-        }
-      } catch (e) {}
+      this.cleanupSession(sessionDir);
     }
   }
 }

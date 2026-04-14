@@ -32,6 +32,8 @@ export interface LabConfig {
   title: string;
   subjectId: string;
   profileId: string;
+  environmentType: "single_runtime" | "single_machine" | "multi_node";
+  toolset?: string[];
   statement: string;
   testcases: {
     input: string;
