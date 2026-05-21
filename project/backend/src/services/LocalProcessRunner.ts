@@ -3,8 +3,9 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { v4 as uuidv4 } from "uuid";
-import { ExecutionProfile } from "../models/types";
-import { ExecutionService, ExecutionResult } from "./ExecutionService";
+import { ExecutionProfile, ExecutionResult, ExecutionStatus } from "../models/types";
+import { ExecutionService } from "./ExecutionService";
+import { logBus } from "./ExecutionLogBus";
 
 export class LocalProcessRunner implements ExecutionService {
   private createTempFile(code: string, profile: ExecutionProfile): string {
@@ -47,10 +48,12 @@ export class LocalProcessRunner implements ExecutionService {
     commandArgs: string[],
     input: string | null,
     timeoutMs: number,
+    executionId?: string,
     cwd?: string
   ): Promise<ExecutionResult> {
     return new Promise((resolve) => {
       const startTime = Date.now();
+      if (executionId) logBus.emitStatus(executionId, "started");
       const command = commandArgs[0];
       const args = commandArgs.slice(1);
 
@@ -77,35 +80,46 @@ export class LocalProcessRunner implements ExecutionService {
           stderr: stderr + "\nError: Execution Timed Out.",
           executionTimeMs: Date.now() - startTime,
           exitCode: 124,
+          status: "timeout"
         });
       }, timeoutMs);
 
       child.on("error", (err) => {
         clearTimeout(timeoutTimer);
-        resolve({
+        const errorResult: ExecutionResult = {
           stdout,
           stderr: stderr + `\nSystem Error: Failed to start process '${command}'. Please ensure it is installed and in your PATH.\n(${err.message})`,
           executionTimeMs: Date.now() - startTime,
           exitCode: -1,
-        });
+          status: "failed"
+        };
+        if (executionId) logBus.emitStatus(executionId, "failed", errorResult);
+        resolve(errorResult);
       });
 
       child.stdout.on("data", (data: any) => {
-        stdout += data.toString();
+        const chunk = data.toString();
+        stdout += chunk;
+        if (executionId) logBus.emitLog(executionId, "stdout", chunk);
       });
 
       child.stderr.on("data", (data: any) => {
-        stderr += data.toString();
+        const chunk = data.toString();
+        stderr += chunk;
+        if (executionId) logBus.emitLog(executionId, "stderr", chunk);
       });
 
       child.on("close", (code: number | null) => {
         clearTimeout(timeoutTimer);
-        resolve({
+        const finalResult: ExecutionResult = {
           stdout,
           stderr,
           executionTimeMs: Date.now() - startTime,
           exitCode: code,
-        });
+          status: code === 0 ? "finished" : "failed"
+        };
+        if (executionId) logBus.emitStatus(executionId, finalResult.status, finalResult);
+        resolve(finalResult);
       });
 
       if (input) {
@@ -117,52 +131,57 @@ export class LocalProcessRunner implements ExecutionService {
     });
   }
 
-  async executeRun(code: string, profile: ExecutionProfile, stdin?: string): Promise<ExecutionResult> {
+  async executeRun(code: string, profile: ExecutionProfile, executionId: string, stdin?: string): Promise<ExecutionResult> {
     const filePath = this.createTempFile(code, profile);
     const sessionDir = path.dirname(filePath);
     try {
       // Build Step
       if (profile.buildCommand) {
         const buildCmd = profile.buildCommand(filePath);
-        const buildRes = await this.runProcess(buildCmd, null, 10000, sessionDir);
+        // Build logs are also streamed
+        const buildRes = await this.runProcess(buildCmd, null, 10000, executionId, sessionDir);
         if (buildRes.exitCode !== 0) {
-          return {
+          const res: ExecutionResult = {
             stdout: "",
             stderr: "Build Error:\n" + buildRes.stderr,
             executionTimeMs: buildRes.executionTimeMs,
-            exitCode: buildRes.exitCode
+            exitCode: buildRes.exitCode,
+            status: "failed"
           };
+          if (executionId) logBus.emitStatus(executionId, "failed", res);
+          return res;
         }
       }
 
       // Run Step
       const command = profile.runCommand(filePath);
-      return await this.runProcess(command, stdin || null, profile.timeoutMs, sessionDir);
+      return await this.runProcess(command, stdin || null, profile.timeoutMs, executionId, sessionDir);
     } finally {
       this.cleanupSession(sessionDir);
     }
   }
 
-  async executeSubmit(code: string, input: string, profile: ExecutionProfile): Promise<ExecutionResult> {
+  async executeSubmit(code: string, input: string, profile: ExecutionProfile, executionId: string): Promise<ExecutionResult> {
     const filePath = this.createTempFile(code, profile);
     const sessionDir = path.dirname(filePath);
     try {
       // Build Step
       if (profile.buildCommand) {
         const buildCmd = profile.buildCommand(filePath);
-        const buildRes = await this.runProcess(buildCmd, null, 10000, sessionDir);
+        const buildRes = await this.runProcess(buildCmd, null, 10000, executionId, sessionDir);
         if (buildRes.exitCode !== 0) {
           return {
             stdout: "",
             stderr: "Build Error:\n" + buildRes.stderr,
             executionTimeMs: buildRes.executionTimeMs,
-            exitCode: buildRes.exitCode
+            exitCode: buildRes.exitCode,
+            status: "failed"
           };
         }
       }
 
       const command = profile.testCommand(filePath);
-      return await this.runProcess(command, input, profile.timeoutMs, sessionDir);
+      return await this.runProcess(command, input, profile.timeoutMs, executionId, sessionDir);
     } finally {
       this.cleanupSession(sessionDir);
     }

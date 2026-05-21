@@ -14,6 +14,17 @@ export interface ExecutionProfile {
   };
   networkPolicy: string;
   gradingStrategy: string;
+  dockerImage?: string; // New: Image for DockerRunner
+}
+
+export type ExecutionStatus = "queued" | "started" | "streaming" | "finished" | "failed" | "timeout";
+
+export interface ExecutionResult {
+  stdout: string;
+  stderr: string;
+  executionTimeMs: number;
+  exitCode: number | null;
+  status: ExecutionStatus;
 }
 
 export interface Faculty {
@@ -48,6 +59,6 @@ export interface SubmissionRecord {
   language: string;
   profileId: string;
   createdAt: string;
-  status: "pending" | "running" | "graded" | "error";
+  status: ExecutionStatus | "pending" | "running" | "graded" | "error"; // Integrated new states
   result?: any;
 }

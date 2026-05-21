@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
+import { io, Socket } from 'socket.io-client';
+import WebTerminal from './components/WebTerminal';
 
 const API_BASE = 'http://localhost:3001';
 
@@ -57,6 +59,7 @@ function App() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedLabId, setSelectedLabId] = useState<string>('');
   
+  const [terminalSessionId, setTerminalSessionId] = useState<string | null>(null);
   const [lab, setLab] = useState<Lab | null>(null);
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   
@@ -66,6 +69,41 @@ function App() {
   const [submitResult, setSubmitResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'problem' | 'run' | 'submit'>('problem');
+  
+  // New: WebSocket and Real-time Logs
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  const [logs, setLogs] = useState<{stream: string, data: string}[]>([]);
+  const [executionStatus, setExecutionStatus] = useState<string>('');
+  const [executionPayload, setExecutionPayload] = useState<any>(null);
+
+  useEffect(() => {
+    if (!executionId) return;
+
+    const socket: Socket = io(API_BASE);
+
+    socket.on('connect', () => {
+      console.log('Connected to socket, subscribing to', executionId);
+      socket.emit('subscribe', executionId);
+    });
+
+    socket.on('execution:log', (event: { stream: string, data: string }) => {
+      setLogs(prev => [...prev, event]);
+    });
+
+    socket.on('execution:status', (event: { status: string, payload?: any }) => {
+      setExecutionStatus(event.status);
+      if (event.payload) {
+        setExecutionPayload(event.payload);
+        if (event.status === 'finished' || event.status === 'failed' || event.status === 'timeout') {
+          setLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [executionId]);
 
   // Load faculties on mount
   useEffect(() => {
@@ -109,22 +147,27 @@ function App() {
 
   // Load Lab details and profile when Lab changes
   useEffect(() => {
-    if (!selectedLabId) {
-      setLab(null);
-      setProfile(null);
-      return;
-    }
-
-    setLoading(true);
-    axios.get(`${API_BASE}/labs/${selectedLabId}`).then(res => {
-      setLab(res.data);
-      axios.get(`${API_BASE}/profiles/${res.data.profileId}`).then(pRes => {
+    const fetchLabDetails = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${API_BASE}/labs/${selectedLabId}`);
+        setLab(res.data);
+        const pRes = await axios.get(`${API_BASE}/profiles/${res.data.profileId}`);
         const prof = pRes.data;
         setProfile(prof);
         setCode(DEFAULT_CODE[prof.language] || '');
         setLoading(false);
-      });
-    }).catch(() => setLoading(false));
+      } catch (err) {
+        setLoading(false);
+      }
+    };
+    if (selectedLabId) {
+      fetchLabDetails();
+    } else {
+      setLab(null);
+      setProfile(null);
+      setTerminalSessionId(null);
+    }
   }, [selectedLabId]);
 
   const handleRun = async () => {
@@ -132,17 +175,22 @@ function App() {
     setLoading(true);
     setActiveTab('run');
     setSubmitResult(null);
+    setRunResult(null);
+    setLogs([]);
+    setExecutionStatus('queued');
+    setExecutionPayload(null);
+
     try {
       const res = await axios.post(`${API_BASE}/run`, {
         code,
         profileId: lab.profileId,
         stdin
       });
-      setRunResult(res.data);
+      setExecutionId(res.data.executionId);
     } catch (err: any) {
       setRunResult({ error: err.response?.data?.error || err.message });
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSubmit = async () => {
@@ -150,18 +198,35 @@ function App() {
     setLoading(true);
     setActiveTab('submit');
     setRunResult(null);
+    setSubmitResult(null);
+    setLogs([]);
+    setExecutionStatus('queued');
+    setExecutionPayload(null);
+
     try {
       const res = await axios.post(`${API_BASE}/submit`, {
         code,
         profileId: lab.profileId,
         labId: lab.id
       });
-      setSubmitResult(res.data);
+      setExecutionId(res.data.executionId);
     } catch (err: any) {
       setSubmitResult({ error: err.response?.data?.error || err.message });
+      setLoading(false);
     }
-    setLoading(false);
   };
+
+  const handleStartLab = async () => {
+    try {
+      const res = await axios.post(`${API_BASE}/terminal/init`);
+      setTerminalSessionId(res.data.sessionId);
+      setActiveTab('run'); // switch to run tab implicitly if needed
+    } catch (err) {
+      console.error("Failed to init terminal", err);
+    }
+  };
+
+  const isTerminalLab = currentLab?.environmentType === 'single_machine' || currentLab?.environmentType === 'multi_node';
 
   return (
     <div className="flex h-screen bg-slate-900 text-slate-200 overflow-hidden">
@@ -283,30 +348,42 @@ function App() {
                 Console Output
               </h2>
               
-              {loading ? (
-                <div className="text-slate-500 animate-pulse font-mono text-sm italic">Executing process...</div>
+              {loading || executionId ? (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2 text-xs font-mono">
+                    <span className="text-slate-500 uppercase">Status:</span>
+                    <span className={`px-2 py-0.5 rounded font-bold ${
+                      executionStatus === 'finished' ? 'bg-green-900/40 text-green-400' :
+                      executionStatus === 'failed' ? 'bg-red-900/40 text-red-400' :
+                      'bg-blue-900/40 text-blue-400 animate-pulse'
+                    }`}>
+                      {executionStatus.toUpperCase() || 'INITIALIZING'}
+                    </span>
+                  </div>
+
+                  <div className="bg-black p-5 rounded-lg border border-slate-800 font-mono text-sm shadow-2xl relative overflow-x-auto min-h-[100px]">
+                    <div className="opacity-30 mb-2 select-none text-[10px]"># live console logs</div>
+                    {logs.length === 0 && !executionPayload && (
+                      <div className="text-slate-700 italic opacity-50">Waiting for output...</div>
+                    )}
+                    {logs.map((log, i) => (
+                      <div key={i} className={log.stream === 'stderr' ? 'text-red-400' : 'text-green-400'}>
+                        {log.data}
+                      </div>
+                    ))}
+                    
+                    {executionPayload && (
+                      <div className="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-[10px] text-slate-600 tracking-wider">
+                        <span>TIME: {executionPayload.executionTimeMs}ms</span>
+                        <span>EXIT CODE: {executionPayload.exitCode}</span>
+                        <span>STATUS: {executionStatus.toUpperCase()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               ) : runResult ? (
                 <div className="bg-black p-5 rounded-lg border border-slate-800 text-green-400 font-mono text-sm whitespace-pre-wrap shadow-2xl relative overflow-x-auto">
-                  {runResult.error ? (
-                    <span className="text-red-500">{runResult.error}</span>
-                  ) : (
-                    <>
-                      <div className="opacity-30 mb-2 select-none"># stdout</div>
-                      {runResult.result.stdout || <span className="text-slate-700 italic opacity-50">Empty stdout</span>}
-                      
-                      {runResult.result.stderr && (
-                        <>
-                          <div className="mt-4 mb-2 opacity-30 select-none text-red-500"># stderr</div>
-                          <div className="text-red-400/90">{runResult.result.stderr}</div>
-                        </>
-                      )}
-                      
-                      <div className="mt-8 pt-4 border-t border-slate-900 flex justify-between items-center text-[10px] text-slate-600 tracking-wider">
-                        <span>TIME: {runResult.result.executionTimeMs}ms</span>
-                        <span>STATUS: {runResult.result.exitCode === 0 ? 'SUCCESS' : `EXIT ${runResult.result.exitCode}`}</span>
-                      </div>
-                    </>
-                  )}
+                    {/* Fallback UI for persisted results if needed */}
                 </div>
               ) : (
                 <div className="text-slate-600 italic text-sm">No output yet. Click "Play" in the code editor to run.</div>
@@ -320,32 +397,46 @@ function App() {
                 <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></span>
                 Evaluation Result
               </h2>
-              {loading ? (
-                <div className="text-slate-500 animate-pulse italic font-mono text-sm">Grading binary...</div>
-              ) : submitResult ? (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  {submitResult.error ? (
-                    <div className="p-4 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
-                      <span className="font-bold">Error:</span> {submitResult.error}
+              {loading || executionId ? (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2 text-xs font-mono mb-2">
+                    <span className="text-slate-500 uppercase">Grading Status:</span>
+                    <span className={`px-2 py-0.5 rounded font-bold ${
+                      executionStatus === 'finished' ? 'bg-purple-900/40 text-purple-400' :
+                      'bg-blue-900/40 text-blue-400 animate-pulse'
+                    }`}>
+                      {executionStatus.toUpperCase() || 'QUEUED'}
+                    </span>
+                  </div>
+
+                  {/* Real-time grading logs */}
+                  {!executionPayload && (
+                    <div className="bg-black/40 p-4 rounded border border-slate-800 font-mono text-[11px] text-slate-400 min-h-[60px]">
+                       {logs.map((log, i) => (
+                         <div key={i}>{log.data}</div>
+                       ))}
+                       {logs.length === 0 && <span className="opacity-30 italic">Initializing runner...</span>}
                     </div>
-                  ) : (
-                    <>
+                  )}
+
+                  {executionPayload && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div className="flex items-center justify-between p-6 rounded-xl bg-slate-800 border border-slate-700 mb-8 shadow-xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-1 opacity-5 group-hover:opacity-10 transition-opacity">
                           <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                         </div>
                         <div className="relative">
                           <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] mb-1">Session Performance</p>
-                          <p className="text-5xl font-black text-white">{submitResult.score}<span className="text-xl text-slate-600">/100</span></p>
+                          <p className="text-5xl font-black text-white">{executionPayload.score}<span className="text-xl text-slate-600">/100</span></p>
                         </div>
                         <div className="text-right relative">
-                          <p className="text-lg font-black text-slate-300">{submitResult.passedTests} <span className="text-slate-600 font-medium">OF</span> {submitResult.totalTests}</p>
+                          <p className="text-lg font-black text-slate-300">{executionPayload.passedTests} <span className="text-slate-600 font-medium">OF</span> {executionPayload.totalTests}</p>
                           <p className="text-[10px] text-purple-400 font-bold tracking-widest uppercase">Verified Cases</p>
                         </div>
                       </div>
 
                       <div className="space-y-4">
-                        {submitResult.testResults?.map((tc: any) => (
+                        {executionPayload.testResults?.map((tc: any) => (
                           <div key={tc.index} className={`p-4 rounded-lg border transition-all ${tc.passed ? 'border-green-900/40 bg-green-900/10' : 'border-red-900/40 bg-red-900/10'}`}>
                             <div className="flex justify-between items-center mb-4">
                               <span className="font-black text-xs text-slate-500 tracking-wider">CASE #{tc.index}</span>
@@ -375,8 +466,12 @@ function App() {
                           </div>
                         ))}
                       </div>
-                    </>
+                    </div>
                   )}
+                </div>
+              ) : submitResult ? (
+                <div className="text-slate-600 italic text-sm">
+                  Persisted results logic here...
                 </div>
               ) : (
                 <div className="text-slate-600 italic text-sm">Grading binary not yet evaluated. Click "Submit" to benchmark.</div>
@@ -399,9 +494,18 @@ function App() {
             <span className="text-blue-400/80">Main{profile?.extension || '.py'}</span>
           </div>
           <div className="flex gap-3">
+            {isTerminalLab && !terminalSessionId && (
+              <button 
+                onClick={handleStartLab}
+                disabled={loading}
+                className="px-5 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 shadow-lg"
+              >
+                Start Lab
+              </button>
+            )}
             <button 
               onClick={handleRun}
-              disabled={loading}
+              disabled={loading || isTerminalLab}
               className="px-5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 shadow-lg"
             >
               Play
@@ -416,25 +520,29 @@ function App() {
           </div>
         </div>
         <div className="flex-1 relative">
-          <Editor
-            height="100%"
-            language={profile?.language || 'python'}
-            theme="vs-dark"
-            value={code}
-            onChange={(val) => setCode(val || '')}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              fontFamily: "'Fira Code', 'Monaco', monospace",
-              padding: { top: 20 },
-              cursorBlinking: 'smooth',
-              smoothScrolling: true,
-              scrollbar: {
-                vertical: 'hidden',
-                horizontal: 'hidden'
-              }
-            }}
-          />
+          {isTerminalLab ? (
+            <WebTerminal sessionId={terminalSessionId} apiBase={API_BASE} />
+          ) : (
+            <Editor
+              height="100%"
+              language={profile?.language || 'python'}
+              theme="vs-dark"
+              value={code}
+              onChange={(val) => setCode(val || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: "'Fira Code', 'Monaco', monospace",
+                padding: { top: 20 },
+                cursorBlinking: 'smooth',
+                smoothScrolling: true,
+                scrollbar: {
+                  vertical: 'hidden',
+                  horizontal: 'hidden'
+                }
+              }}
+            />
+          )}
         </div>
       </div>
     </div>

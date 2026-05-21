@@ -17,6 +17,7 @@ export const profiles: Record<string, ExecutionProfile> = {
     resourceLimits: { maxOutputBytes: 10000 },
     networkPolicy: "disabled",
     gradingStrategy: "stdin_stdout_exact",
+    dockerImage: "python:3.11-slim",
   },
   nodejs_20: {
     id: "nodejs_20",
@@ -32,6 +33,7 @@ export const profiles: Record<string, ExecutionProfile> = {
     resourceLimits: { maxOutputBytes: 10000 },
     networkPolicy: "disabled",
     gradingStrategy: "stdin_stdout_exact",
+    dockerImage: "node:20-slim",
   },
   cpp_gcc: {
     id: "cpp_gcc",
@@ -47,6 +49,7 @@ export const profiles: Record<string, ExecutionProfile> = {
     resourceLimits: { maxOutputBytes: 10000 },
     networkPolicy: "disabled",
     gradingStrategy: "stdin_stdout_exact",
+    dockerImage: "gcc:13",
   },
   java_basic: {
     id: "java_basic",
@@ -62,6 +65,7 @@ export const profiles: Record<string, ExecutionProfile> = {
     resourceLimits: { maxOutputBytes: 10000 },
     networkPolicy: "disabled",
     gradingStrategy: "stdin_stdout_exact",
+    dockerImage: "openjdk:17-slim",
   },
   security_shell: {
     id: "security_shell",
@@ -77,6 +81,23 @@ export const profiles: Record<string, ExecutionProfile> = {
     resourceLimits: { maxOutputBytes: 20000 },
     networkPolicy: "isolated",
     gradingStrategy: "tool_output_match",
+    dockerImage: "ubuntu:22.04",
+  },
+  malware_analysis_shell: {
+    id: "malware_analysis_shell",
+    displayName: "Malware Analysis (Bash)",
+    osFamily: "linux_aligned",
+    language: "shell",
+    version: "Ubuntu 22.x + Wine",
+    extension: ".sh",
+    buildCommand: null,
+    runCommand: (filePath) => ["bash", filePath],
+    testCommand: (filePath) => ["bash", filePath],
+    timeoutMs: 15000, // Slightly longer timeout for xvfb and wine initialization
+    resourceLimits: { maxOutputBytes: 50000 },
+    networkPolicy: "bridge", // Must have network for tcpdump to capture something
+    gradingStrategy: "tool_output_match",
+    dockerImage: "malware-env:latest",
   },
 };
 
@@ -276,6 +297,44 @@ Sử dụng script Python để thực hiện logic tìm kiếm này. Bạn có 
     `,
     testcases: [
       { input: "ef7759", expectedOutput: "0" },
+    ],
+  },
+  lab_winlocker_analysis: {
+    id: "lab_winlocker_analysis",
+    title: "Dynamic Analysis of WinlockerVB6Blacksod",
+    subjectId: "net_sec", // Assigning to network security, or crypto. Let's use net_sec.
+    profileId: "malware_analysis_shell",
+    environmentType: "single_runtime",
+    toolset: ["wine", "tcpdump", "strace", "bash"],
+    statement: `
+### Description
+Tiến hành phân tích động mẫu ransomware WinlockerVB6Blacksod.exe.
+
+**Mục tiêu**:
+1. Sử dụng \`strace\` để theo dõi các thao tác tệp tin. (Mã độc tạo/ghi vào một file có định dạng \`.txt\` ở đâu?)
+2. Sử dụng \`tcpdump\` để bắt gói tin, tìm địa chỉ IP của máy chủ C2 mà mã độc cố gắng kết nối đến.
+
+**Hướng dẫn thực hiện**:
+Mã độc được đặt tại \`/opt/malware/WinlockerVB6Blacksod.exe\`.
+Hãy viết một script Bash thực hiện tự động các công việc sau:
+1. Chạy \`tcpdump -i eth0 -w ret.pcap &\` dưới nền trước khi chạy mã độc để bắt gói tin.
+2. Chạy mã độc ngầm với \`timeout\` để tránh bị treo vô hạn:
+   \`timeout 5 xvfb-run -a strace -f -e trace=file wine /opt/malware/WinlockerVB6Blacksod.exe 2> strace.log\`
+3. Sau khi mã độc chạy xong (đợi vài giây hoặc bị timeout), dùng \`grep\` trên file \`strace.log\` để tìm file \`.txt\` bị thao tác và in ra màn hình đường dẫn file đó.
+4. Dùng lệnh \`tcpdump -r ret.pcap -nn\` kết hợp \`grep\` và awk để in ra IP đích (ví dụ: \`172.x.x.x\`).
+
+
+**Định dạng đầu ra yêu cầu**:
+\`\`\`
+ENCRYPTED_FILE: <đường_dẫn_tới_file>
+C2_IP: <địa_chỉ_IP>
+\`\`\`
+    `,
+    testcases: [
+      { 
+        input: "", 
+        expectedOutput: "ENCRYPTED_FILE: C:\\users\\public\\encrypted_data.txt\nC2_IP: 172.25.0.100" 
+      },
     ],
   },
 };
