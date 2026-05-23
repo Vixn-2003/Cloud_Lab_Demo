@@ -3,14 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
-  FlaskConical,
-  FileText,
+  Home,
+  BookOpen,
+  History,
   Code2,
   Terminal,
   Settings,
-  Cloud,
   User,
+  GraduationCap,
+  HelpCircle,
 } from 'lucide-react';
 
 import {
@@ -31,7 +32,8 @@ const mainNavItems = [
   {
     title: 'Home',
     href: '/dashboard',
-    icon: LayoutDashboard,
+    icon: Home,
+    description: 'Continue your learning journey',
   },
 ];
 
@@ -39,33 +41,44 @@ const learningNavItems = [
   {
     title: 'My Labs',
     href: '/labs',
-    icon: FlaskConical,
+    icon: BookOpen,
+    description: 'View and start your assigned labs',
   },
   {
-    title: 'Attempts',
+    title: 'My Attempts',
     href: '/submissions',
-    icon: FileText,
+    icon: History,
+    description: 'Review your past submissions',
   },
 ];
 
 const practiceNavItems = [
   {
-    title: 'Code Editor',
+    title: 'Sandbox',
     href: '/workspace',
     icon: Code2,
+    description: 'Practice coding freely',
   },
   {
     title: 'Terminal',
     href: '/terminal',
     icon: Terminal,
+    description: 'Run commands in the cloud',
   },
 ];
 
-const systemNavItems = [
+const helpNavItems = [
+  {
+    title: 'Help Center',
+    href: '/help',
+    icon: HelpCircle,
+    description: 'Get help and support',
+  },
   {
     title: 'Settings',
     href: '/settings',
     icon: Settings,
+    description: 'Manage your preferences',
   },
 ];
 
@@ -84,7 +97,7 @@ export function AppSidebar() {
       <SidebarHeader className="px-4 py-4">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[oklch(0.6_0.22_290)]">
-            <Cloud className="h-4 w-4 text-primary-foreground" />
+            <GraduationCap className="h-4 w-4 text-primary-foreground" />
           </div>
           <span className="font-semibold text-lg group-data-[collapsible=icon]:hidden">
             Cloud Lab
@@ -118,7 +131,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-            Learning
+            My Learning
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -142,7 +155,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-            Practice
+            Practice Area
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -166,11 +179,11 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-            System
+            Support
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {systemNavItems.map((item) => (
+              {helpNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
@@ -194,12 +207,12 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton className="cursor-default">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-                <User className="h-3 w-3 text-muted-foreground" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                <User className="h-3 w-3 text-primary" />
               </div>
               <div className="flex flex-col group-data-[collapsible=icon]:hidden">
                 <span className="text-sm font-medium">Student</span>
-                <span className="text-xs text-muted-foreground">v2.0.0</span>
+                <span className="text-xs text-muted-foreground">Learning Mode</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
