@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   ArrowRight,
   Play,
@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScoreBadge } from '@/components/score-display';
+import { Link } from '@/src/i18n/navigation';
 import {
   getCurrentLab,
   getLabsDueSoon,
@@ -29,20 +30,21 @@ import {
 } from '@/lib/sample-data';
 import type { Lab, Attempt } from '@/lib/types';
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 function useGreeting() {
-  const [greeting, setGreeting] = useState('Welcome back');
-  
+  const t = useTranslations('dashboard.greeting');
+  const [greeting, setGreeting] = useState(t('default'));
+
   useEffect(() => {
-    setGreeting(getGreeting());
-  }, []);
-  
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      setGreeting(t('morning'));
+    } else if (hour < 18) {
+      setGreeting(t('afternoon'));
+    } else {
+      setGreeting(t('evening'));
+    }
+  }, [t]);
+
   return greeting;
 }
 
@@ -71,26 +73,28 @@ function formatDueDate(dateString: string) {
   return `Due in ${diffDays} days`;
 }
 
-function getLabCTA(lab: Lab) {
+function getLabCTA(lab: Lab, t: (key: string) => string) {
   switch (lab.status) {
     case 'not_started':
-      return { label: 'Start Lab', icon: Play };
+      return { label: t('startNewLab'), icon: Play };
     case 'in_progress':
-      return { label: 'Continue Coding', icon: ArrowRight };
+      return { label: t('continueLearning'), icon: ArrowRight };
     case 'submitted':
-      return { label: 'View Result', icon: CheckCircle2 };
+      return { label: t('viewResult'), icon: CheckCircle2 };
     case 'needs_revision':
-      return { label: 'Fix and Resubmit', icon: RotateCcw };
+      return { label: t('needsAttention'), icon: RotateCcw };
     case 'completed':
-      return { label: 'Review', icon: CheckCircle2 };
+      return { label: t('viewResult'), icon: CheckCircle2 };
     case 'overdue':
-      return { label: 'Start Now', icon: AlertTriangle };
+      return { label: t('startNewLab'), icon: AlertTriangle };
     default:
-      return { label: 'Open Lab', icon: ArrowRight };
+      return { label: t('viewAllLabs'), icon: ArrowRight };
   }
 }
 
 export function DashboardContent() {
+  const t = useTranslations('dashboard');
+  const tStatus = useTranslations('status');
   const greeting = useGreeting();
   const currentLab = getCurrentLab();
   const labsDueSoon = getLabsDueSoon();
@@ -106,7 +110,7 @@ export function DashboardContent() {
           {greeting}
         </h1>
         <p className="text-muted-foreground">
-          {currentLab ? 'Pick up where you left off' : 'Ready to start learning?'}
+          {currentLab ? t('continueWhere') : t('subtitle')}
         </p>
       </div>
 
@@ -118,7 +122,7 @@ export function DashboardContent() {
               <div className="flex-1 space-y-3">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="bg-primary/10 text-primary">
-                    In Progress
+                    {tStatus('inProgress')}
                   </Badge>
                   <span className="text-sm text-muted-foreground">
                     {currentLab.subjectTitle}
@@ -128,7 +132,7 @@ export function DashboardContent() {
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5" />
-                    Last edited {formatTimeAgo(currentLab.lastEditedAt!)}
+                    {formatTimeAgo(currentLab.lastEditedAt!)}
                   </span>
                   {currentLab.dueDate && (
                     <span className="flex items-center gap-1">
@@ -139,7 +143,7 @@ export function DashboardContent() {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Progress</span>
+                    <span className="text-muted-foreground">{t('progressLabel')}</span>
                     <span className="font-medium">{currentLab.progress}%</span>
                   </div>
                   <Progress value={currentLab.progress} className="h-2" />
@@ -147,7 +151,7 @@ export function DashboardContent() {
               </div>
               <Button size="lg" asChild className="shrink-0">
                 <Link href={`/labs/${currentLab.id}`}>
-                  Continue Coding
+                  {t('continueLearning')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -163,11 +167,11 @@ export function DashboardContent() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <Clock className="h-4 w-4 text-warning" />
-              Due Soon
+              {t('dueSoon')}
             </CardTitle>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/labs?status=not_started,in_progress">
-                View All <ArrowRight className="ml-1 h-4 w-4" />
+                {t('viewAllLabs')} <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
           </CardHeader>
@@ -175,7 +179,7 @@ export function DashboardContent() {
             {labsDueSoon.length > 0 ? (
               <div className="space-y-3">
                 {labsDueSoon.map((lab) => {
-                  const cta = getLabCTA(lab);
+                  const cta = getLabCTA(lab, t);
                   return (
                     <Link
                       key={lab.id}
@@ -190,7 +194,7 @@ export function DashboardContent() {
                           </span>
                           {lab.progress !== undefined && lab.progress > 0 && (
                             <span className="text-xs text-muted-foreground">
-                              {lab.progress}% complete
+                              {lab.progress}%
                             </span>
                           )}
                         </div>
@@ -206,7 +210,7 @@ export function DashboardContent() {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <CheckCircle2 className="h-8 w-8 text-success mb-2" />
-                <p className="text-sm text-muted-foreground">No urgent deadlines</p>
+                <p className="text-sm text-muted-foreground">{t('noDueSoon')}</p>
               </div>
             )}
           </CardContent>
@@ -217,11 +221,11 @@ export function DashboardContent() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-destructive" />
-              Needs Attention
+              {t('needsAttention')}
             </CardTitle>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/labs?status=needs_revision,overdue">
-                View All <ArrowRight className="ml-1 h-4 w-4" />
+                {t('viewAllLabs')} <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
           </CardHeader>
@@ -229,7 +233,7 @@ export function DashboardContent() {
             {labsNeedingAttention.length > 0 ? (
               <div className="space-y-3">
                 {labsNeedingAttention.map((lab) => {
-                  const cta = getLabCTA(lab);
+                  const cta = getLabCTA(lab, t);
                   const isOverdue = lab.status === 'overdue';
                   return (
                     <Link
@@ -246,11 +250,11 @@ export function DashboardContent() {
                             variant="outline"
                             className={isOverdue ? 'border-destructive/50 text-destructive' : 'border-warning/50 text-warning'}
                           >
-                            {isOverdue ? 'Overdue' : 'Needs Revision'}
+                            {isOverdue ? tStatus('overdue') : tStatus('inProgress')}
                           </Badge>
                           {lab.bestScore !== undefined && (
                             <span className="text-xs text-muted-foreground">
-                              Score: {lab.bestScore}/{lab.maxScore}
+                              {lab.bestScore}/{lab.maxScore}
                             </span>
                           )}
                         </div>
@@ -270,7 +274,7 @@ export function DashboardContent() {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <CheckCircle2 className="h-8 w-8 text-success mb-2" />
-                <p className="text-sm text-muted-foreground">All caught up!</p>
+                <p className="text-sm text-muted-foreground">{t('noNeedsAttention')}</p>
               </div>
             )}
           </CardContent>
@@ -282,11 +286,11 @@ export function DashboardContent() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-primary" />
-            Recent Feedback
+            {t('recentFeedback')}
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/submissions">
-              View All <ArrowRight className="ml-1 h-4 w-4" />
+              {t('viewAllLabs')} <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
         </CardHeader>
@@ -314,7 +318,7 @@ export function DashboardContent() {
                           </p>
                         )}
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span>Attempt #{attempt.attemptNumber}</span>
+                          <span>#{attempt.attemptNumber}</span>
                           <span>{formatTimeAgo(attempt.created_at)}</span>
                         </div>
                       </div>
@@ -334,8 +338,7 @@ export function DashboardContent() {
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <MessageSquare className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No feedback yet</p>
-              <p className="text-xs text-muted-foreground mt-1">Submit a lab to receive feedback</p>
+              <p className="text-sm text-muted-foreground">{t('noFeedback')}</p>
             </div>
           )}
         </CardContent>
@@ -351,7 +354,7 @@ export function DashboardContent() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.completedLabs}/{stats.totalLabs}</p>
-                <p className="text-xs text-muted-foreground">Labs Completed</p>
+                <p className="text-xs text-muted-foreground">{t('labsCompleted')}</p>
               </div>
             </div>
           </CardContent>
@@ -365,7 +368,7 @@ export function DashboardContent() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.averageScore}%</p>
-                <p className="text-xs text-muted-foreground">Average Score</p>
+                <p className="text-xs text-muted-foreground">{t('avgScore')}</p>
               </div>
             </div>
           </CardContent>
@@ -379,7 +382,7 @@ export function DashboardContent() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.streak}</p>
-                <p className="text-xs text-muted-foreground">Day Streak</p>
+                <p className="text-xs text-muted-foreground">{t('currentStreak')}</p>
               </div>
             </div>
           </CardContent>
@@ -392,8 +395,8 @@ export function DashboardContent() {
                 <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
               <div>
-                <p className="text-sm font-medium group-hover:text-primary transition-colors">Browse Labs</p>
-                <p className="text-xs text-muted-foreground">Find your next challenge</p>
+                <p className="text-sm font-medium group-hover:text-primary transition-colors">{t('viewAllLabs')}</p>
+                <p className="text-xs text-muted-foreground">{t('subtitle')}</p>
               </div>
             </Link>
           </CardContent>

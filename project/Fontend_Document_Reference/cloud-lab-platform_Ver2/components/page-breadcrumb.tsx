@@ -1,7 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link, usePathname } from '@/src/i18n/navigation';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,17 +20,18 @@ interface PageBreadcrumbProps {
   segments?: BreadcrumbSegment[];
 }
 
-const routeLabels: Record<string, string> = {
-  dashboard: 'Dashboard',
-  labs: 'Labs',
-  submissions: 'My Submissions',
-  workspace: 'Code Editor',
-  terminal: 'Terminal',
-  settings: 'Settings',
-};
-
 export function PageBreadcrumb({ segments }: PageBreadcrumbProps) {
+  const t = useTranslations('breadcrumb');
   const pathname = usePathname();
+
+  const routeLabels: Record<string, string> = {
+    dashboard: t('home'),
+    labs: t('labs'),
+    submissions: t('submissions'),
+    workspace: t('workspace'),
+    terminal: t('terminal'),
+    settings: t('settings'),
+  };
 
   // If custom segments are provided, use them
   if (segments && segments.length > 0) {
@@ -39,7 +40,7 @@ export function PageBreadcrumb({ segments }: PageBreadcrumbProps) {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard">{t('home')}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           {segments.map((segment, index) => (
@@ -69,7 +70,7 @@ export function PageBreadcrumb({ segments }: PageBreadcrumbProps) {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbPage>Dashboard</BreadcrumbPage>
+            <BreadcrumbPage>{t('home')}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -81,7 +82,7 @@ export function PageBreadcrumb({ segments }: PageBreadcrumbProps) {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/dashboard">{t('home')}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         {pathSegments.map((segment, index) => {
