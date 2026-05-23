@@ -1,0 +1,247 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Cloud Lab Premium Dark Theme - Inspired by Vercel/Linear/GitHub */
+:root {
+  /* Force dark mode by default */
+  color-scheme: dark;
+}
+
+.dark, :root {
+  /* Background layers */
+  --background: oklch(0.13 0.005 285);
+  --foreground: oklch(0.95 0 0);
+  
+  /* Card/panel surfaces */
+  --card: oklch(0.16 0.005 285);
+  --card-foreground: oklch(0.95 0 0);
+  
+  /* Popover */
+  --popover: oklch(0.16 0.005 285);
+  --popover-foreground: oklch(0.95 0 0);
+  
+  /* Primary - Blue accent */
+  --primary: oklch(0.65 0.2 250);
+  --primary-foreground: oklch(0.98 0 0);
+  
+  /* Secondary - Subtle surfaces */
+  --secondary: oklch(0.22 0.005 285);
+  --secondary-foreground: oklch(0.95 0 0);
+  
+  /* Muted - Disabled/tertiary */
+  --muted: oklch(0.22 0.005 285);
+  --muted-foreground: oklch(0.6 0.01 285);
+  
+  /* Accent - Interactive hover */
+  --accent: oklch(0.24 0.01 285);
+  --accent-foreground: oklch(0.95 0 0);
+  
+  /* Destructive - Error states */
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  
+  /* Borders */
+  --border: oklch(0.28 0.01 285);
+  --input: oklch(0.28 0.01 285);
+  --ring: oklch(0.65 0.2 250);
+  
+  /* Semantic colors */
+  --success: oklch(0.65 0.2 145);
+  --success-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.75 0.18 85);
+  --warning-foreground: oklch(0.15 0 0);
+  --info: oklch(0.7 0.15 200);
+  --info-foreground: oklch(0.98 0 0);
+  
+  /* Brand accents */
+  --accent-blue: oklch(0.65 0.2 250);
+  --accent-purple: oklch(0.6 0.22 290);
+  --accent-green: oklch(0.65 0.2 145);
+  --accent-red: oklch(0.6 0.22 25);
+  --accent-amber: oklch(0.75 0.18 85);
+  --accent-cyan: oklch(0.7 0.15 200);
+  
+  /* Chart colors */
+  --chart-1: oklch(0.65 0.2 250);
+  --chart-2: oklch(0.65 0.2 145);
+  --chart-3: oklch(0.6 0.22 290);
+  --chart-4: oklch(0.75 0.18 85);
+  --chart-5: oklch(0.7 0.15 200);
+  
+  /* Radius */
+  --radius: 0.5rem;
+  
+  /* Sidebar - Premium dark */
+  --sidebar: oklch(0.11 0.005 285);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.65 0.2 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.2 0.01 285);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.24 0.01 285);
+  --sidebar-ring: oklch(0.65 0.2 250);
+}
+
+@theme inline {
+  --font-sans: 'Inter', 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Geist Mono', monospace;
+  
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar for dark theme */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.3 0.01 285);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.4 0.01 285);
+  }
+}
+
+/* Terminal cursor blink animation */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Count-up animation for scores */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-count-up {
+  animation: count-up 0.5s ease-out forwards;
+}
+
+/* Fade in slide up for page transitions */
+@keyframes fade-in-up {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
+/* Monaco editor dark theme overrides */
+.monaco-editor {
+  --vscode-editor-background: oklch(0.13 0.005 285) !important;
+}
+
+/* Xterm.js container */
+.xterm {
+  padding: 8px;
+}
+
+.xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: oklch(0.3 0.01 285);
+  border-radius: 4px;
+}
+
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, oklch(0.65 0.2 250), oklch(0.6 0.22 290));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Score color utilities */
+.score-perfect {
+  color: oklch(0.65 0.2 145);
+}
+
+.score-good {
+  color: oklch(0.65 0.2 250);
+}
+
+.score-partial {
+  color: oklch(0.75 0.18 85);
+}
+
+.score-failed {
+  color: oklch(0.6 0.22 25);
+}
