@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useTranslations, useFormatter, useLocale } from 'next-intl';
+import { Link } from '@/src/i18n/navigation';
 import {
   Search,
   X,
@@ -28,87 +29,84 @@ import type { Lab, LabStatus } from '@/lib/types';
 
 type FilterTab = 'all' | 'to_do' | 'in_progress' | 'submitted' | 'needs_attention' | 'completed';
 
-const tabConfig: { value: FilterTab; label: string; statuses: LabStatus[] }[] = [
-  { value: 'all', label: 'All', statuses: [] },
-  { value: 'to_do', label: 'To Do', statuses: ['not_started'] },
-  { value: 'in_progress', label: 'In Progress', statuses: ['in_progress'] },
-  { value: 'submitted', label: 'Submitted', statuses: ['submitted'] },
-  { value: 'needs_attention', label: 'Needs Attention', statuses: ['needs_revision', 'overdue'] },
-  { value: 'completed', label: 'Completed', statuses: ['completed'] },
-];
-
-function formatDueDate(dateString?: string) {
-  if (!dateString) return null;
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) return { text: 'Overdue', urgent: true };
-  if (diffDays === 0) return { text: 'Due today', urgent: true };
-  if (diffDays === 1) return { text: 'Due tomorrow', urgent: true };
-  if (diffDays <= 3) return { text: `Due in ${diffDays} days`, urgent: true };
-  return { text: `Due in ${diffDays} days`, urgent: false };
-}
-
-function formatTimeAgo(dateString?: string) {
-  if (!dateString) return null;
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffHours < 1) return 'Just now';
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'Yesterday';
-  return `${diffDays} days ago`;
-}
-
-function getLabCTA(lab: Lab): { label: string; icon: typeof Play; variant: 'default' | 'outline' | 'destructive' } {
-  switch (lab.status) {
-    case 'not_started':
-      return { label: 'Start Lab', icon: Play, variant: 'default' };
-    case 'in_progress':
-      return { label: 'Continue', icon: ArrowRight, variant: 'default' };
-    case 'submitted':
-      return { label: 'View Result', icon: Eye, variant: 'outline' };
-    case 'needs_revision':
-      return { label: 'Fix & Resubmit', icon: RotateCcw, variant: 'default' };
-    case 'completed':
-      return { label: 'Review', icon: CheckCircle2, variant: 'outline' };
-    case 'overdue':
-      return { label: 'Start Now', icon: AlertTriangle, variant: 'destructive' };
-    default:
-      return { label: 'Open', icon: ArrowRight, variant: 'outline' };
-  }
-}
-
-function getStatusBadge(status?: LabStatus) {
-  switch (status) {
-    case 'not_started':
-      return <Badge variant="secondary">Not Started</Badge>;
-    case 'in_progress':
-      return <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">In Progress</Badge>;
-    case 'submitted':
-      return <Badge variant="secondary" className="bg-info/10 text-info border-info/20">Submitted</Badge>;
-    case 'needs_revision':
-      return <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">Needs Revision</Badge>;
-    case 'completed':
-      return <Badge variant="secondary" className="bg-success/10 text-success border-success/20">Completed</Badge>;
-    case 'overdue':
-      return <Badge variant="destructive">Overdue</Badge>;
-    default:
-      return null;
-  }
-}
-
 export function LabBrowserContent() {
+  const t = useTranslations('labs');
+  const tStatus = useTranslations('status');
+  const tCommon = useTranslations('common');
+  const format = useFormatter();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [activeTab, setActiveTab] = useState<FilterTab>(
     (searchParams.get('status') as FilterTab) || 'all'
   );
+
+  const tabConfig: { value: FilterTab; label: string; statuses: LabStatus[] }[] = [
+    { value: 'all', label: t('tabs.all'), statuses: [] },
+    { value: 'to_do', label: t('tabs.toDo'), statuses: ['not_started'] },
+    { value: 'in_progress', label: t('tabs.inProgress'), statuses: ['in_progress'] },
+    { value: 'submitted', label: t('tabs.submitted'), statuses: ['submitted'] },
+    { value: 'needs_attention', label: t('tabs.needsAttention'), statuses: ['needs_revision', 'overdue'] },
+    { value: 'completed', label: t('tabs.completed'), statuses: ['completed'] },
+  ];
+
+  function formatDueDate(dateString?: string) {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { text: tStatus('overdue'), urgent: true };
+    if (diffDays === 0) return { text: t('dueToday'), urgent: true };
+    if (diffDays === 1) return { text: t('dueTomorrow'), urgent: true };
+    if (diffDays <= 3) return { text: t('dueInDays', { days: diffDays }), urgent: true };
+    return { text: t('dueInDays', { days: diffDays }), urgent: false };
+  }
+
+  function formatTimeAgo(dateString?: string) {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return format.relativeTime(date);
+  }
+
+  function getLabCTA(lab: Lab): { label: string; icon: typeof Play; variant: 'default' | 'outline' | 'destructive' } {
+    switch (lab.status) {
+      case 'not_started':
+        return { label: t('startLab'), icon: Play, variant: 'default' };
+      case 'in_progress':
+        return { label: tCommon('continue'), icon: ArrowRight, variant: 'default' };
+      case 'submitted':
+        return { label: t('viewResult'), icon: Eye, variant: 'outline' };
+      case 'needs_revision':
+        return { label: t('fixResubmit'), icon: RotateCcw, variant: 'default' };
+      case 'completed':
+        return { label: tCommon('review'), icon: CheckCircle2, variant: 'outline' };
+      case 'overdue':
+        return { label: t('startNow'), icon: AlertTriangle, variant: 'destructive' };
+      default:
+        return { label: tCommon('open'), icon: ArrowRight, variant: 'outline' };
+    }
+  }
+
+  function getStatusBadge(status?: LabStatus) {
+    switch (status) {
+      case 'not_started':
+        return <Badge variant="secondary">{tStatus('notStarted')}</Badge>;
+      case 'in_progress':
+        return <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">{tStatus('inProgress')}</Badge>;
+      case 'submitted':
+        return <Badge variant="secondary" className="bg-info/10 text-info border-info/20">{tStatus('submitted')}</Badge>;
+      case 'needs_revision':
+        return <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">{tStatus('needsRevision')}</Badge>;
+      case 'completed':
+        return <Badge variant="secondary" className="bg-success/10 text-success border-success/20">{tStatus('completed')}</Badge>;
+      case 'overdue':
+        return <Badge variant="destructive">{tStatus('overdue')}</Badge>;
+      default:
+        return null;
+    }
+  }
 
   // Get counts for each tab
   const tabCounts = useMemo(() => {
@@ -188,16 +186,16 @@ export function LabBrowserContent() {
     });
 
     return result;
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, tabConfig]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)]">
       {/* Header */}
       <div className="p-6 pb-4 space-y-4">
         <div>
-          <h1 className="text-2xl font-bold">My Labs</h1>
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
           <p className="text-sm text-muted-foreground">
-            {filteredLabs.length} labs assigned to you
+            {t('labsAssigned', { count: filteredLabs.length })}
           </p>
         </div>
 
@@ -221,7 +219,7 @@ export function LabBrowserContent() {
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search labs..."
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9"
@@ -246,18 +244,18 @@ export function LabBrowserContent() {
         {filteredLabs.length === 0 ? (
           <EmptyState
             icon={<FlaskConical className="h-8 w-8 text-muted-foreground" />}
-            title={searchQuery ? 'No labs found' : 'No labs in this category'}
+            title={searchQuery ? t('noLabsFound') : t('noLabsInCategory')}
             description={
               searchQuery
-                ? 'Try adjusting your search query.'
+                ? t('adjustSearch')
                 : activeTab === 'completed'
-                ? 'Complete labs to see them here.'
-                : 'Check back later for new assignments.'
+                ? t('completeLabsToSee')
+                : t('checkBackLater')
             }
             action={
               searchQuery && (
                 <Button variant="outline" onClick={() => setSearchQuery('')}>
-                  Clear Search
+                  {t('clearSearch')}
                 </Button>
               )
             }
@@ -265,7 +263,15 @@ export function LabBrowserContent() {
         ) : (
           <div className="space-y-3">
             {filteredLabs.map((lab) => (
-              <LabCard key={lab.id} lab={lab} />
+              <LabCard
+                key={lab.id}
+                lab={lab}
+                formatDueDate={formatDueDate}
+                formatTimeAgo={formatTimeAgo}
+                getLabCTA={getLabCTA}
+                getStatusBadge={getStatusBadge}
+                t={t}
+              />
             ))}
           </div>
         )}
@@ -274,7 +280,16 @@ export function LabBrowserContent() {
   );
 }
 
-function LabCard({ lab }: { lab: Lab }) {
+interface LabCardProps {
+  lab: Lab;
+  formatDueDate: (dateString?: string) => { text: string; urgent: boolean } | null;
+  formatTimeAgo: (dateString?: string) => string | null;
+  getLabCTA: (lab: Lab) => { label: string; icon: typeof Play; variant: 'default' | 'outline' | 'destructive' };
+  getStatusBadge: (status?: LabStatus) => JSX.Element | null;
+  t: ReturnType<typeof useTranslations>;
+}
+
+function LabCard({ lab, formatDueDate, formatTimeAgo, getLabCTA, getStatusBadge, t }: LabCardProps) {
   const cta = getLabCTA(lab);
   const dueInfo = formatDueDate(lab.dueDate);
   const lastEdited = formatTimeAgo(lab.lastEditedAt);
@@ -313,14 +328,14 @@ function LabCard({ lab }: { lab: Lab }) {
             {lastEdited && (
               <span className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="h-3.5 w-3.5" />
-                Last edited {lastEdited}
+                {t('lastEdited', { time: lastEdited })}
               </span>
             )}
 
             {/* Attempts */}
             {lab.attemptsCount !== undefined && lab.attemptsCount > 0 && (
               <span className="text-muted-foreground">
-                {lab.attemptsCount} attempt{lab.attemptsCount > 1 ? 's' : ''}
+                {t('attempts', { count: lab.attemptsCount })}
               </span>
             )}
 
@@ -334,7 +349,7 @@ function LabCard({ lab }: { lab: Lab }) {
           {lab.status === 'in_progress' && lab.progress !== undefined && (
             <div className="space-y-1 max-w-xs">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">{t('progress')}</span>
                 <span className="font-medium">{lab.progress}%</span>
               </div>
               <Progress value={lab.progress} className="h-1.5" />

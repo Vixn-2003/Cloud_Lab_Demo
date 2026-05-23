@@ -50,46 +50,38 @@
   },
   "labs": {
     "title": "Bài lab của tôi",
-    "description": "Xem và làm các bài lab được giao",
-    "search": "Tìm kiếm lab...",
-    "filterStatus": "Lọc theo trạng thái",
-    "allStatus": "Tất cả trạng thái",
+    "labsAssigned": "{count} bài lab được giao",
+    "searchPlaceholder": "Tìm kiếm lab...",
     "tabs": {
       "all": "Tất cả",
+      "toDo": "Chưa làm",
       "inProgress": "Đang làm",
-      "todo": "Chưa bắt đầu",
-      "completed": "Hoàn thành",
-      "overdue": "Quá hạn"
+      "submitted": "Đã nộp",
+      "needsAttention": "Cần chú ý",
+      "completed": "Hoàn thành"
     },
-    "empty": {
-      "title": "Không tìm thấy bài lab",
-      "description": "Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác"
-    },
-    "card": {
-      "difficulty": "Độ khó",
-      "dueDate": "Hạn nộp",
-      "attempts": "Lần nộp",
-      "bestScore": "Điểm cao nhất",
-      "lastAttempt": "Lần nộp gần nhất",
-      "notAttempted": "Chưa nộp"
-    },
-    "actions": {
-      "startLab": "Bắt đầu lab",
-      "continueLab": "Tiếp tục làm",
-      "reviewLab": "Xem lại",
-      "retryLab": "Làm lại"
-    },
-    "difficulty": {
-      "easy": "Dễ",
-      "medium": "Trung bình",
-      "hard": "Khó"
-    }
+    "dueToday": "Hết hạn hôm nay",
+    "dueTomorrow": "Hết hạn ngày mai",
+    "dueInDays": "Còn {days} ngày",
+    "startLab": "Bắt đầu",
+    "viewResult": "Xem kết quả",
+    "fixResubmit": "Sửa & Nộp lại",
+    "startNow": "Bắt đầu ngay",
+    "noLabsFound": "Không tìm thấy lab",
+    "noLabsInCategory": "Không có lab trong danh mục này",
+    "adjustSearch": "Thử thay đổi từ khóa tìm kiếm",
+    "completeLabsToSee": "Hoàn thành lab để xem ở đây",
+    "checkBackLater": "Quay lại sau để xem bài mới",
+    "clearSearch": "Xóa tìm kiếm",
+    "lastEdited": "Chỉnh sửa {time}",
+    "attempts": "{count, plural, =1 {# lần nộp} other {# lần nộp}}",
+    "progress": "Tiến độ"
   },
   "workspace": {
     "tabs": {
       "instructions": "Hướng dẫn",
-      "requirements": "Yêu cầu",
-      "resources": "Tài liệu"
+      "result": "Kết quả",
+      "history": "Lịch sử"
     },
     "header": {
       "backToLabs": "Quay lại danh sách lab",
@@ -107,18 +99,20 @@
       "title": "Kết quả",
       "console": "Console",
       "testResults": "Kết quả kiểm thử",
-      "customInput": "Dữ liệu đầu vào",
+      "customInput": "Dữ liệu đầu vào tùy chỉnh",
+      "customInputHint": "Dùng để test code với dữ liệu tùy chỉnh trước khi nộp",
       "noOutput": "Chưa có kết quả. Nhấn \"Chạy thử\" để xem kết quả.",
       "running": "Đang chạy...",
       "passed": "Đạt",
       "failed": "Chưa đạt"
     },
     "actions": {
-      "run": "Chạy thử",
-      "runTests": "Chạy kiểm thử",
+      "runCode": "Chạy thử",
+      "runTests": "Chạy test",
       "submit": "Nộp bài",
       "submitting": "Đang nộp...",
-      "saved": "Đã lưu"
+      "saved": "Đã lưu",
+      "saving": "Đang lưu..."
     },
     "submit": {
       "title": "Nộp bài lab",
@@ -131,79 +125,89 @@
       "runError": "Có lỗi khi chạy code",
       "submitSuccess": "Nộp bài thành công!",
       "submitError": "Có lỗi khi nộp bài",
-      "codeSaved": "Đã lưu code"
-    }
+      "codeSaved": "Đã lưu code",
+      "runningCode": "Đang chạy code...",
+      "runningTests": "Đang chạy test...",
+      "submittingCode": "Đang nộp bài..."
+    },
+    "notFound": "Không tìm thấy lab",
+    "notFoundDesc": "Không thể tìm thấy bài lab yêu cầu",
+    "backToLabs": "Quay lại danh sách lab",
+    "noSubmission": "Chưa có bài nộp",
+    "submitToSee": "Nộp bài để xem kết quả",
+    "noHistory": "Chưa có lịch sử",
+    "submitToSeeHistory": "Nộp bài để xem lịch sử ở đây",
+    "attempt": "Lần nộp #{number}",
+    "bestLabel": "Điểm cao nhất"
   },
   "submissions": {
     "title": "Lịch sử nộp bài",
-    "description": "Xem lại các bài đã nộp và kết quả",
-    "search": "Tìm kiếm...",
-    "filterLab": "Lọc theo lab",
-    "allLabs": "Tất cả lab",
+    "subtitle": "Xem lại các bài đã nộp và phản hồi",
+    "searchPlaceholder": "Tìm kiếm lab...",
     "tabs": {
       "all": "Tất cả",
+      "graded": "Đã chấm",
       "passed": "Đạt",
-      "failed": "Chưa đạt",
+      "needsRevision": "Cần sửa",
       "pending": "Đang chờ"
     },
-    "table": {
-      "lab": "Bài lab",
-      "submittedAt": "Thời gian nộp",
-      "score": "Điểm",
-      "status": "Trạng thái",
-      "actions": "Thao tác"
-    },
-    "empty": {
-      "title": "Chưa có bài nộp nào",
-      "description": "Hoàn thành một bài lab để xem kết quả ở đây"
-    },
-    "actions": {
-      "viewDetail": "Xem chi tiết",
-      "tryAgain": "Làm lại"
-    }
+    "noAttemptsFound": "Không tìm thấy bài nộp",
+    "noAttemptsInCategory": "Không có bài nộp trong danh mục này",
+    "adjustSearch": "Thử thay đổi từ khóa tìm kiếm",
+    "submitLabToSee": "Nộp bài lab để xem lịch sử ở đây",
+    "noAttemptsMatch": "Không có bài nộp phù hợp với bộ lọc này",
+    "clearSearch": "Xóa tìm kiếm",
+    "goToMyLabs": "Đến Bài lab của tôi",
+    "unknownLab": "Lab không xác định",
+    "attemptCount": "{count, plural, =1 {# lần nộp} other {# lần nộp}}",
+    "attemptNumber": "Lần #{number}",
+    "showingCount": "Hiển thị {shown}/{total} bài nộp",
+    "fixResubmit": "Sửa & Nộp lại",
+    "viewFeedback": "Xem phản hồi"
   },
   "result": {
-    "title": "Kết quả bài nộp",
+    "title": "Kết quả của bạn",
+    "notFound": "Không tìm thấy kết quả",
+    "notFoundDescription": "Không thể tìm thấy kết quả bạn đang tìm",
     "backToAttempts": "Quay lại lịch sử",
-    "summary": {
-      "excellent": "Xuất sắc!",
-      "excellentDesc": "Bạn đã vượt qua tất cả các test. Làm tốt lắm!",
-      "goodProgress": "Tiến bộ tốt!",
-      "goodProgressDesc": "Bạn đã vượt qua {passed}/{total} test. Tiếp tục cố gắng!",
-      "keepTrying": "Cố gắng thêm!",
-      "keepTryingDesc": "Xem lại kết quả test và thử lại. Học tập cần thực hành!"
+    "feedback": {
+      "excellent": {
+        "title": "Xuất sắc!",
+        "message": "Bạn đã vượt qua tất cả các test. Làm tốt lắm!",
+        "tip1": "Cân nhắc tối ưu hóa code để hiệu năng tốt hơn",
+        "tip2": "Thử giải các bài tương tự để củng cố kiến thức"
+      },
+      "good": {
+        "title": "Tiến bộ tốt!",
+        "message": "Bạn đã vượt qua {passed}/{total} test. Tiếp tục cố gắng!",
+        "tip1": "Xem kỹ các test case chưa đạt",
+        "tip2": "Kiểm tra các trường hợp biên trong code",
+        "tip3": "Cân nhắc các tình huống đầu vào khác nhau"
+      },
+      "needsWork": {
+        "title": "Cố gắng thêm!",
+        "message": "Xem lại kết quả test và thử lại. Học tập cần thực hành!",
+        "tip1": "Đọc lại kỹ đề bài",
+        "tip2": "Bắt đầu với test case đơn giản nhất",
+        "tip3": "Chia nhỏ bài toán thành các bước nhỏ hơn"
+      }
     },
-    "testsPassed": "Test đạt",
-    "tips": {
-      "title": "Gợi ý cải thiện",
-      "excellent": [
-        "Cân nhắc tối ưu hóa code để hiệu năng tốt hơn",
-        "Thử giải các bài tương tự để củng cố kiến thức"
-      ],
-      "partial": [
-        "Xem kỹ các test case chưa đạt",
-        "Kiểm tra các trường hợp biên trong code",
-        "Cân nhắc các tình huống đầu vào khác nhau"
-      ],
-      "failed": [
-        "Đọc lại kỹ đề bài",
-        "Bắt đầu với test case đơn giản nhất",
-        "Chia nhỏ bài toán thành các bước nhỏ hơn"
-      ]
-    },
+    "testsPassed": "{passed}/{total} test đạt",
     "testResults": "Kết quả kiểm thử",
-    "testCase": "Test case #{index}",
+    "testsPassedDescription": "{passed}/{total} test case đạt ({percent}%)",
+    "testCase": "Test case #{number}",
     "input": "Đầu vào",
     "expectedOutput": "Kết quả mong đợi",
     "yourOutput": "Kết quả của bạn",
+    "noOutput": "(không có kết quả)",
+    "empty": "(trống)",
     "errorMessage": "Thông báo lỗi",
+    "tipsForImprovement": "Gợi ý cải thiện",
     "submittedCode": "Code đã nộp",
-    "codeDesc": "Xem lại code và tìm điểm cần cải thiện",
-    "copyCode": "Sao chép code",
-    "copied": "Đã sao chép!",
+    "reviewSolution": "Xem lại code và tìm điểm cần cải thiện",
     "attemptDetails": "Chi tiết bài nộp",
-    "submittedDate": "Ngày nộp",
-    "submittedTime": "Giờ nộp",
+    "submitted": "Ngày nộp",
+    "time": "Giờ nộp",
     "language": "Ngôn ngữ",
     "tryAgain": "Làm lại"
   },
@@ -235,6 +239,7 @@
     }
   },
   "status": {
+    "status": "Trạng thái",
     "notStarted": "Chưa bắt đầu",
     "inProgress": "Đang làm",
     "submitted": "Đã nộp",
@@ -243,7 +248,8 @@
     "passed": "Đạt",
     "failed": "Chưa đạt",
     "completed": "Hoàn thành",
-    "overdue": "Quá hạn"
+    "overdue": "Quá hạn",
+    "needsRevision": "Cần sửa"
   },
   "common": {
     "loading": "Đang tải...",
@@ -265,7 +271,12 @@
     "score": "Điểm",
     "of": "trên",
     "student": "Sinh viên",
-    "learningMode": "Chế độ học tập"
+    "learningMode": "Chế độ học tập",
+    "continue": "Tiếp tục",
+    "review": "Xem lại",
+    "open": "Mở",
+    "copyCode": "Sao chép code",
+    "copied": "Đã sao chép!"
   },
   "breadcrumb": {
     "home": "Trang chủ",

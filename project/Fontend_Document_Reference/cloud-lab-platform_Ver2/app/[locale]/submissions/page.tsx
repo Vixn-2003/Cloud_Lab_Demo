@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useTranslations, useFormatter } from 'next-intl';
+import { Link } from '@/src/i18n/navigation';
 import {
   Search,
   X,
@@ -24,56 +25,6 @@ import { sampleAttempts, getLabById } from '@/lib/sample-data';
 import type { Attempt } from '@/lib/types';
 
 type FilterTab = 'all' | 'graded' | 'passed' | 'needs_revision' | 'pending';
-
-const tabConfig: { value: FilterTab; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'graded', label: 'Graded' },
-  { value: 'passed', label: 'Passed' },
-  { value: 'needs_revision', label: 'Needs Revision' },
-  { value: 'pending', label: 'Pending' },
-];
-
-function formatTimeAgo(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffHours < 1) return 'Just now';
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'Yesterday';
-  return `${diffDays} days ago`;
-}
-
-function getAttemptCTA(attempt: Attempt) {
-  if (attempt.status === 'pending') {
-    return { label: 'Pending', icon: Clock, variant: 'secondary' as const };
-  }
-  if (attempt.status === 'needs_revision' && attempt.canRetry) {
-    return { label: 'Fix & Resubmit', icon: RotateCcw, variant: 'default' as const };
-  }
-  return { label: 'View Feedback', icon: Eye, variant: 'outline' as const };
-}
-
-function getStatusBadge(attempt: Attempt) {
-  const isPassed = attempt.score !== undefined && attempt.score >= 80;
-  
-  switch (attempt.status) {
-    case 'pending':
-      return <Badge variant="secondary" className="bg-info/10 text-info border-info/20">Pending</Badge>;
-    case 'graded':
-      return isPassed 
-        ? <Badge variant="secondary" className="bg-success/10 text-success border-success/20">Passed</Badge>
-        : <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">Graded</Badge>;
-    case 'needs_revision':
-      return <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">Needs Revision</Badge>;
-    case 'failed':
-      return <Badge variant="destructive">Failed</Badge>;
-    default:
-      return null;
-  }
-}
 
 // Group attempts by lab
 function groupAttemptsByLab(attempts: Attempt[]) {
@@ -100,11 +51,57 @@ function groupAttemptsByLab(attempts: Attempt[]) {
 }
 
 export default function AttemptsPage() {
+  const t = useTranslations('submissions');
+  const tStatus = useTranslations('status');
+  const tCommon = useTranslations('common');
+  const format = useFormatter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [activeTab, setActiveTab] = useState<FilterTab>(
     (searchParams.get('status') as FilterTab) || 'all'
   );
+
+  const tabConfig: { value: FilterTab; label: string }[] = [
+    { value: 'all', label: t('tabs.all') },
+    { value: 'graded', label: t('tabs.graded') },
+    { value: 'passed', label: t('tabs.passed') },
+    { value: 'needs_revision', label: t('tabs.needsRevision') },
+    { value: 'pending', label: t('tabs.pending') },
+  ];
+
+  function formatTimeAgo(dateString: string) {
+    const date = new Date(dateString);
+    return format.relativeTime(date);
+  }
+
+  function getAttemptCTA(attempt: Attempt) {
+    if (attempt.status === 'pending') {
+      return { label: tStatus('pending'), icon: Clock, variant: 'secondary' as const };
+    }
+    if (attempt.status === 'needs_revision' && attempt.canRetry) {
+      return { label: t('fixResubmit'), icon: RotateCcw, variant: 'default' as const };
+    }
+    return { label: t('viewFeedback'), icon: Eye, variant: 'outline' as const };
+  }
+
+  function getStatusBadge(attempt: Attempt) {
+    const isPassed = attempt.score !== undefined && attempt.score >= 80;
+    
+    switch (attempt.status) {
+      case 'pending':
+        return <Badge variant="secondary" className="bg-info/10 text-info border-info/20">{tStatus('pending')}</Badge>;
+      case 'graded':
+        return isPassed 
+          ? <Badge variant="secondary" className="bg-success/10 text-success border-success/20">{tStatus('passed')}</Badge>
+          : <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">{tStatus('graded')}</Badge>;
+      case 'needs_revision':
+        return <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">{tStatus('needsRevision')}</Badge>;
+      case 'failed':
+        return <Badge variant="destructive">{tStatus('failed')}</Badge>;
+      default:
+        return null;
+    }
+  }
 
   // Get counts for each tab
   const tabCounts = useMemo(() => {
@@ -168,9 +165,9 @@ export default function AttemptsPage() {
   return (
     <div className="animate-fade-in-up p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">My Attempts</h1>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          View your submission history and feedback
+          {t('subtitle')}
         </p>
       </div>
 
@@ -194,7 +191,7 @@ export default function AttemptsPage() {
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search labs..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 h-9"
@@ -216,22 +213,22 @@ export default function AttemptsPage() {
       {filteredAttempts.length === 0 ? (
         <EmptyState
           icon={<FileText className="h-8 w-8 text-muted-foreground" />}
-          title={searchQuery ? 'No attempts found' : 'No attempts in this category'}
+          title={searchQuery ? t('noAttemptsFound') : t('noAttemptsInCategory')}
           description={
             searchQuery
-              ? 'Try adjusting your search query.'
+              ? t('adjustSearch')
               : activeTab === 'all'
-              ? 'Submit a lab to see your attempts here.'
-              : 'No attempts match this filter.'
+              ? t('submitLabToSee')
+              : t('noAttemptsMatch')
           }
           action={
             searchQuery ? (
               <Button variant="outline" onClick={() => setSearchQuery('')}>
-                Clear Search
+                {t('clearSearch')}
               </Button>
             ) : (
               <Button asChild>
-                <Link href="/labs">Go to My Labs</Link>
+                <Link href="/labs">{t('goToMyLabs')}</Link>
               </Button>
             )
           }
@@ -246,18 +243,26 @@ export default function AttemptsPage() {
                   href={`/labs/${labId}`}
                   className="font-semibold hover:text-primary transition-colors flex items-center gap-2"
                 >
-                  {lab?.title || 'Unknown Lab'}
+                  {lab?.title || t('unknownLab')}
                   <ChevronRight className="h-4 w-4" />
                 </Link>
                 <span className="text-sm text-muted-foreground">
-                  {attempts.length} attempt{attempts.length > 1 ? 's' : ''}
+                  {t('attemptCount', { count: attempts.length })}
                 </span>
               </div>
 
               {/* Attempts for this lab */}
               <div className="space-y-2 pl-4 border-l-2 border-border">
                 {attempts.map((attempt) => (
-                  <AttemptCard key={attempt.id} attempt={attempt} />
+                  <AttemptCard
+                    key={attempt.id}
+                    attempt={attempt}
+                    t={t}
+                    formatTimeAgo={formatTimeAgo}
+                    getAttemptCTA={getAttemptCTA}
+                    getStatusBadge={getStatusBadge}
+                    format={format}
+                  />
                 ))}
               </div>
             </div>
@@ -267,16 +272,24 @@ export default function AttemptsPage() {
 
       <div className="flex items-center justify-between text-sm text-muted-foreground pt-4">
         <span>
-          Showing {filteredAttempts.length} of {sampleAttempts.length} attempts
+          {t('showingCount', { shown: filteredAttempts.length, total: sampleAttempts.length })}
         </span>
       </div>
     </div>
   );
 }
 
-function AttemptCard({ attempt }: { attempt: Attempt }) {
+interface AttemptCardProps {
+  attempt: Attempt;
+  t: ReturnType<typeof useTranslations>;
+  formatTimeAgo: (dateString: string) => string;
+  getAttemptCTA: (attempt: Attempt) => { label: string; icon: typeof Clock; variant: 'default' | 'outline' | 'secondary' };
+  getStatusBadge: (attempt: Attempt) => JSX.Element | null;
+  format: ReturnType<typeof useFormatter>;
+}
+
+function AttemptCard({ attempt, t, formatTimeAgo, getAttemptCTA, getStatusBadge, format }: AttemptCardProps) {
   const cta = getAttemptCTA(attempt);
-  const isPassed = attempt.score !== undefined && attempt.score >= 80;
 
   return (
     <Link
@@ -289,7 +302,7 @@ function AttemptCard({ attempt }: { attempt: Attempt }) {
         <div className="flex-1 min-w-0 space-y-2">
           {/* Header */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium">Attempt #{attempt.attemptNumber}</span>
+            <span className="font-medium">{t('attemptNumber', { number: attempt.attemptNumber })}</span>
             {getStatusBadge(attempt)}
             <ScoreBadge score={attempt.score} />
           </div>
@@ -307,7 +320,7 @@ function AttemptCard({ attempt }: { attempt: Attempt }) {
               <Clock className="h-3.5 w-3.5" />
               {formatTimeAgo(attempt.created_at)}
             </span>
-            <span>{new Date(attempt.created_at).toLocaleDateString()}</span>
+            <span>{format.dateTime(new Date(attempt.created_at), { dateStyle: 'medium' })}</span>
           </div>
         </div>
 
