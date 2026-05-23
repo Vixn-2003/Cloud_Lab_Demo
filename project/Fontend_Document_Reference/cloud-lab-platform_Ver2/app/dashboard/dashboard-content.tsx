@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -33,6 +34,16 @@ function getGreeting() {
   if (hour < 12) return 'Good morning';
   if (hour < 18) return 'Good afternoon';
   return 'Good evening';
+}
+
+function useGreeting() {
+  const [greeting, setGreeting] = useState('Welcome back');
+  
+  useEffect(() => {
+    setGreeting(getGreeting());
+  }, []);
+  
+  return greeting;
 }
 
 function formatTimeAgo(dateString: string) {
@@ -80,6 +91,7 @@ function getLabCTA(lab: Lab) {
 }
 
 export function DashboardContent() {
+  const greeting = useGreeting();
   const currentLab = getCurrentLab();
   const labsDueSoon = getLabsDueSoon();
   const labsNeedingAttention = getLabsNeedingAttention();
@@ -91,7 +103,7 @@ export function DashboardContent() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          {getGreeting()}
+          {greeting}
         </h1>
         <p className="text-muted-foreground">
           {currentLab ? 'Pick up where you left off' : 'Ready to start learning?'}
