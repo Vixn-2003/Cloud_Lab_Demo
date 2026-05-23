@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Link, usePathname } from '@/src/i18n/navigation';
 import {
   Home,
   BookOpen,
@@ -27,62 +27,11 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-
-const mainNavItems = [
-  {
-    title: 'Home',
-    href: '/dashboard',
-    icon: Home,
-    description: 'Continue your learning journey',
-  },
-];
-
-const learningNavItems = [
-  {
-    title: 'My Labs',
-    href: '/labs',
-    icon: BookOpen,
-    description: 'View and start your assigned labs',
-  },
-  {
-    title: 'My Attempts',
-    href: '/submissions',
-    icon: History,
-    description: 'Review your past submissions',
-  },
-];
-
-const practiceNavItems = [
-  {
-    title: 'Sandbox',
-    href: '/workspace',
-    icon: Code2,
-    description: 'Practice coding freely',
-  },
-  {
-    title: 'Terminal',
-    href: '/terminal',
-    icon: Terminal,
-    description: 'Run commands in the cloud',
-  },
-];
-
-const helpNavItems = [
-  {
-    title: 'Help Center',
-    href: '/help',
-    icon: HelpCircle,
-    description: 'Get help and support',
-  },
-  {
-    title: 'Settings',
-    href: '/settings',
-    icon: Settings,
-    description: 'Manage your preferences',
-  },
-];
+import { LanguageSwitcher } from '@/components/language-switcher';
 
 export function AppSidebar() {
+  const t = useTranslations('navigation');
+  const tCommon = useTranslations('common');
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -91,6 +40,53 @@ export function AppSidebar() {
     }
     return pathname.startsWith(href);
   };
+
+  const mainNavItems = [
+    {
+      title: t('home'),
+      href: '/dashboard',
+      icon: Home,
+    },
+  ];
+
+  const learningNavItems = [
+    {
+      title: t('myLabs'),
+      href: '/labs',
+      icon: BookOpen,
+    },
+    {
+      title: t('myAttempts'),
+      href: '/submissions',
+      icon: History,
+    },
+  ];
+
+  const practiceNavItems = [
+    {
+      title: t('sandbox'),
+      href: '/workspace',
+      icon: Code2,
+    },
+    {
+      title: t('terminal'),
+      href: '/terminal',
+      icon: Terminal,
+    },
+  ];
+
+  const helpNavItems = [
+    {
+      title: t('helpCenter'),
+      href: '/help',
+      icon: HelpCircle,
+    },
+    {
+      title: t('settings'),
+      href: '/settings',
+      icon: Settings,
+    },
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -131,7 +127,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-            My Learning
+            {t('myLearning')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -155,7 +151,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-            Practice Area
+            {t('practiceArea')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -179,7 +175,7 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-            Support
+            {t('support')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -206,15 +202,20 @@ export function AppSidebar() {
         <SidebarSeparator className="mx-2" />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="cursor-default">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                <User className="h-3 w-3 text-primary" />
+            <div className="flex items-center justify-between px-2 py-1 group-data-[collapsible=icon]:justify-center">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                  <User className="h-3 w-3 text-primary" />
+                </div>
+                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                  <span className="text-sm font-medium">{tCommon('student')}</span>
+                  <span className="text-xs text-muted-foreground">{tCommon('learningMode')}</span>
+                </div>
               </div>
-              <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-medium">Student</span>
-                <span className="text-xs text-muted-foreground">Learning Mode</span>
+              <div className="group-data-[collapsible=icon]:hidden">
+                <LanguageSwitcher />
               </div>
-            </SidebarMenuButton>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
