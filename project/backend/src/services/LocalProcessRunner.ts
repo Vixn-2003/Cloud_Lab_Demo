@@ -60,8 +60,21 @@ export class LocalProcessRunner implements ExecutionService {
       const env = { ...process.env };
       if (process.platform === "win32") {
         const gitPath = "C:\\Program Files\\Git\\bin;C:\\Program Files\\Git\\usr\\bin";
+        
+        // Dynamically create a compatibility directory for python3 -> python forwarding on Windows
+        const compatDir = path.resolve(process.cwd(), "workspaces", "compat");
+        try {
+          if (!fs.existsSync(compatDir)) {
+            fs.mkdirSync(compatDir, { recursive: true });
+          }
+          const python3Path = path.join(compatDir, "python3");
+          if (!fs.existsSync(python3Path)) {
+            fs.writeFileSync(python3Path, `#!/bin/bash\npython "$@"\n`, "utf8");
+          }
+        } catch (e) {}
+
         const pathKey = Object.keys(env).find(k => k.toLowerCase() === "path") || "Path";
-        env[pathKey] = `${gitPath};${env[pathKey] || ""}`;
+        env[pathKey] = `${compatDir};${gitPath};${env[pathKey] || ""}`;
       }
 
       const child = spawn(command, args, { 

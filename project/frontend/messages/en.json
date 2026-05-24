@@ -1,0 +1,306 @@
+{
+  "metadata": {
+    "title": "Cloud Lab — Online Lab Platform",
+    "description": "Enterprise-grade online lab platform for students. Write code, run experiments, and submit for auto-grading."
+  },
+  "navigation": {
+    "home": "Home",
+    "myLearning": "My Learning",
+    "subjects": "Courses",
+    "myLabs": "My Labs",
+    "myAttempts": "My History",
+    "feedback": "Feedback",
+    "practiceArea": "Testing Tools",
+    "sandbox": "Code Playground",
+    "terminal": "Test Terminal",
+    "support": "Support",
+    "helpCenter": "Help Center",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "default": "Welcome back"
+    },
+    "subtitle": "Ready to continue learning today?",
+    "continueLearning": "Continue Learning",
+    "continueWhere": "Pick up where you left off",
+    "currentLab": "Current Lab",
+    "progressLabel": "Progress",
+    "dueSoon": "Due Soon",
+    "dueSoonDesc": "Labs that need to be completed soon",
+    "needsAttention": "Needs Attention",
+    "needsAttentionDesc": "Labs that need to be fixed and resubmitted",
+    "recentFeedback": "Recent Feedback",
+    "recentFeedbackDesc": "View feedback from instructors",
+    "yourProgress": "Your Progress",
+    "labsCompleted": "Labs Completed",
+    "avgScore": "Average Score",
+    "currentStreak": "Current Streak",
+    "days": "days",
+    "noCurrentLab": "No lab in progress",
+    "startNewLab": "Start a new lab",
+    "viewAllLabs": "View all labs",
+    "noDueSoon": "No labs due soon",
+    "noNeedsAttention": "All submissions passed",
+    "noFeedback": "No recent feedback",
+    "dueIn": "{days} days left",
+    "overdue": "{days} days overdue",
+    "viewResult": "View result"
+  },
+  "labs": {
+    "title": "My Labs",
+    "subtitle": "Track your progress, start new labs, or continue labs in progress.",
+    "labsAssigned": "{count} assigned labs",
+    "searchPlaceholder": "Search labs...",
+    "continueLab": "Continue Lab",
+    "noActiveLab": "No lab in progress",
+    "noActiveLabDesc": "Select a lab below to start working.",
+    "estimatedTime": "Estimated {minutes} min",
+    "noDueDate": "No due date",
+    "facultyFilter": "Faculty",
+    "subjectFilter": "Subject",
+    "envFilter": "Environment",
+    "bestScoreLabel": "Best score: {score}/100",
+    "latestScoreLabel": "Latest score: {score}/100",
+    "failedTestsLabel": "Failed {count} test cases",
+    "tabs": {
+      "all": "All",
+      "toDo": "Not Started",
+      "inProgress": "In Progress",
+      "submitted": "Submitted",
+      "needsAttention": "Needs Attention",
+      "completed": "Completed",
+      "overdue": "Overdue"
+    },
+    "ctas": {
+      "not_started": "Start Lab",
+      "in_progress": "Continue Lab",
+      "submitted": "View Result",
+      "needs_attention": "Fix & Resubmit",
+      "completed": "Review",
+      "overdue": "View Details"
+    },
+    "empty": {
+      "inProgress": "You don't have any labs in progress. Start a new lab from the list below.",
+      "needsAttention": "No labs need attention. You are fully caught up with your curriculum.",
+      "completed": "You haven't completed any labs yet. Complete a lab to see results here.",
+      "overdue": "No overdue labs. You are right on schedule.",
+      "search": "No matching labs found. Try changing your search query or filters."
+    },
+    "dueToday": "Due today",
+    "dueTomorrow": "Due tomorrow",
+    "dueInDays": "{days} days left",
+    "startLab": "Start Lab",
+    "viewResult": "View Result",
+    "fixResubmit": "Fix & Resubmit",
+    "startNow": "Start Now",
+    "noLabsFound": "No matching labs found",
+    "noLabsInCategory": "No labs in this category",
+    "adjustSearch": "Try changing your search query or filters.",
+    "completeLabsToSee": "Complete a lab to see it here",
+    "checkBackLater": "Check back later for new labs",
+    "clearSearch": "Clear search",
+    "lastEdited": "Saved {time}",
+    "attempts": "{count} attempts",
+    "progress": "Progress"
+  },
+  "workspace": {
+    "tabs": {
+      "instructions": "Instructions",
+      "requirements": "Requirements",
+      "resources": "Resources"
+    },
+    "header": {
+      "backToLabs": "Back to labs",
+      "labInfo": "Lab Info",
+      "dueDate": "Due date",
+      "attempts": "Attempts",
+      "bestScore": "Best score"
+    },
+    "editor": {
+      "language": "Language",
+      "reset": "Reset code",
+      "resetConfirm": "Are you sure you want to reset the code to its original state?"
+    },
+    "output": {
+      "title": "Output",
+      "console": "Console",
+      "testResults": "Test Results",
+      "customInput": "Custom Input",
+      "noOutput": "No output yet. Click \"Run Code\" to see results.",
+      "running": "Running...",
+      "passed": "Passed",
+      "failed": "Failed"
+    },
+    "actions": {
+      "run": "Run Code",
+      "runTests": "Run Tests",
+      "submit": "Submit",
+      "submitting": "Submitting...",
+      "saved": "Saved"
+    },
+    "submit": {
+      "title": "Submit Lab",
+      "description": "Are you sure you want to submit? You can still retry after submitting.",
+      "confirm": "Confirm Submit",
+      "cancel": "Cancel"
+    },
+    "toast": {
+      "runSuccess": "Code executed successfully",
+      "runError": "Error running code",
+      "submitSuccess": "Submitted successfully!",
+      "submitError": "Error submitting",
+      "codeSaved": "Code saved"
+    }
+  },
+  "submissions": {
+    "title": "My Attempts",
+    "description": "Review your submissions and results",
+    "search": "Search...",
+    "filterLab": "Filter by lab",
+    "allLabs": "All labs",
+    "tabs": {
+      "all": "All",
+      "passed": "Passed",
+      "failed": "Failed",
+      "pending": "Pending"
+    },
+    "table": {
+      "lab": "Lab",
+      "submittedAt": "Submitted",
+      "score": "Score",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "empty": {
+      "title": "No submissions yet",
+      "description": "Complete a lab to see your results here"
+    },
+    "actions": {
+      "viewDetail": "View details",
+      "tryAgain": "Try again"
+    }
+  },
+  "result": {
+    "title": "Your Result",
+    "backToAttempts": "Back to attempts",
+    "summary": {
+      "excellent": "Excellent Work!",
+      "excellentDesc": "You passed all test cases. Great job!",
+      "goodProgress": "Good Progress!",
+      "goodProgressDesc": "You passed {passed}/{total} test cases. Keep going!",
+      "keepTrying": "Keep Trying!",
+      "keepTryingDesc": "Review the test results and try again. Learning takes practice!"
+    },
+    "testsPassed": "Tests Passed",
+    "tips": {
+      "title": "Tips for Improvement",
+      "excellent": [
+        "Consider optimizing your solution for better performance",
+        "Try solving similar problems to reinforce your learning"
+      ],
+      "partial": [
+        "Review the failed test cases carefully",
+        "Check edge cases in your solution",
+        "Consider different input scenarios"
+      ],
+      "failed": [
+        "Re-read the problem description carefully",
+        "Start with the simplest test case first",
+        "Break down the problem into smaller steps"
+      ]
+    },
+    "testResults": "Test Results",
+    "testCase": "Test Case #{index}",
+    "input": "Input",
+    "expectedOutput": "Expected Output",
+    "yourOutput": "Your Output",
+    "errorMessage": "Error Message",
+    "submittedCode": "Your Submitted Code",
+    "codeDesc": "Review your solution and identify areas for improvement",
+    "copyCode": "Copy Code",
+    "copied": "Copied!",
+    "attemptDetails": "Attempt Details",
+    "submittedDate": "Submitted",
+    "submittedTime": "Time",
+    "language": "Language",
+    "tryAgain": "Try Again"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your personal preferences",
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "language": "Language",
+      "languageDesc": "Choose display language"
+    },
+    "editor": {
+      "title": "Code Editor",
+      "fontSize": "Font size",
+      "tabSize": "Tab size",
+      "wordWrap": "Word wrap",
+      "minimap": "Show minimap"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "email": "Email notifications",
+      "emailDesc": "Receive emails for new assignments or feedback",
+      "deadline": "Deadline reminders",
+      "deadlineDesc": "Get notified before labs are due"
+    }
+  },
+  "status": {
+    "notStarted": "Not Started",
+    "inProgress": "In Progress",
+    "submitted": "Submitted",
+    "pending": "Pending",
+    "graded": "Graded",
+    "passed": "Passed",
+    "failed": "Failed",
+    "completed": "Completed",
+    "overdue": "Overdue"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "noData": "No data",
+    "score": "Score",
+    "of": "of",
+    "student": "Student",
+    "learningMode": "Learning Mode"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "labs": "Labs",
+    "submissions": "Submissions",
+    "settings": "Settings",
+    "workspace": "Workspace",
+    "terminal": "Terminal",
+    "result": "Result"
+  },
+  "languageSwitcher": {
+    "label": "Language",
+    "vi": "Tiếng Việt",
+    "en": "English"
+  }
+}

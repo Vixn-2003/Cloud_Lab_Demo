@@ -29,6 +29,19 @@ io.on("connection", (socket) => {
   socket.on("subscribe", (executionId: string) => {
     socket.join(executionId);
     console.log(`[Socket] Client subscribed to: ${executionId}`);
+    
+    // Re-emit grading result immediately if already completed to solve WebSocket race conditions
+    try {
+      const sub = dbService.getSubmission(executionId);
+      if (sub && (sub.status === "finished" || sub.status === "failed")) {
+        socket.emit("execution:status", {
+          executionId,
+          status: sub.status,
+          payload: sub.result,
+          message: "Đã hoàn thành chấm điểm trước đó."
+        });
+      }
+    } catch (e) {}
   });
 
   // Terminal logic
@@ -46,8 +59,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log(`[Socket] Client disconnected: ${socket.id}`);
-    // Ideally, we'd map socket.id to sessionId to cleanup. 
-    // For now, the client can emit a cleanup event or we rely on timeout.
+    InteractiveTerminalService.getInstance().handleSocketDisconnect(socket.id);
   });
 });
 
@@ -70,7 +82,10 @@ const PORT = process.env.PORT || 3001;
 // API to generate a session ID for the terminal
 app.post("/terminal/init", (req, res) => {
   const sessionId = uuidv4();
-  // Here we would validate the lab ID, create Docker if needed, etc.
+  const { labId } = req.body;
+  if (labId) {
+    InteractiveTerminalService.getInstance().registerSessionLab(sessionId, labId);
+  }
   res.json({ sessionId });
 });
 

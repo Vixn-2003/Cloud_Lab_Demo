@@ -1,0 +1,237 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { Link, usePathname } from '@/src/i18n/navigation';
+import {
+  Home,
+  BookOpen,
+  History,
+  Code2,
+  Terminal,
+  Settings,
+  User,
+  GraduationCap,
+  HelpCircle,
+  MessageSquare,
+} from 'lucide-react';
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarSeparator,
+} from '@/components/ui/sidebar';
+import { LanguageSwitcher } from '@/components/language-switcher';
+
+export function AppSidebar() {
+  const t = useTranslations('navigation');
+  const tCommon = useTranslations('common');
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === '/dashboard') {
+      return pathname === '/dashboard' || pathname === '/';
+    }
+    return pathname.startsWith(href);
+  };
+
+  const mainNavItems = [
+    {
+      title: t('home'),
+      href: '/dashboard',
+      icon: Home,
+    },
+  ];
+
+  const learningNavItems = [
+    {
+      title: t('subjects'),
+      href: '/subjects',
+      icon: GraduationCap,
+    },
+    {
+      title: t('myLabs'),
+      href: '/labs',
+      icon: BookOpen,
+    },
+    {
+      title: t('myAttempts'),
+      href: '/submissions',
+      icon: History,
+    },
+    {
+      title: t('feedback'),
+      href: '/feedback',
+      icon: MessageSquare,
+    },
+  ];
+
+  const practiceNavItems = [
+    {
+      title: t('sandbox'),
+      href: '/workspace',
+      icon: Code2,
+    },
+    {
+      title: t('terminal'),
+      href: '/terminal',
+      icon: Terminal,
+    },
+  ];
+
+  const helpNavItems = [
+    {
+      title: t('helpCenter'),
+      href: '/help',
+      icon: HelpCircle,
+    },
+    {
+      title: t('settings'),
+      href: '/settings',
+      icon: Settings,
+    },
+  ];
+
+  return (
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <SidebarHeader className="px-4 py-4">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[oklch(0.6_0.22_290)]">
+            <GraduationCap className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <span className="font-semibold text-lg group-data-[collapsible=icon]:hidden">
+            Cloud Lab
+          </span>
+        </Link>
+      </SidebarHeader>
+
+      <SidebarSeparator className="mx-4" />
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainNavItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.title}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+            {t('myLearning')}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {learningNavItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.title}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {process.env.NODE_ENV === 'development' && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+              {t('practiceArea')}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {practiceNavItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.href)}
+                      tooltip={item.title}
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+            {t('support')}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {helpNavItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.title}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarSeparator className="mx-2" />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <div className="flex items-center justify-between px-2 py-1 group-data-[collapsible=icon]:justify-center">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                  <User className="h-3 w-3 text-primary" />
+                </div>
+                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                  <span className="text-sm font-medium">{tCommon('student')}</span>
+                  <span className="text-xs text-muted-foreground">{tCommon('learningMode')}</span>
+                </div>
+              </div>
+              <div className="group-data-[collapsible=icon]:hidden">
+                <LanguageSwitcher />
+              </div>
+            </div>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

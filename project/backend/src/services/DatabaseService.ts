@@ -55,13 +55,17 @@ export class DatabaseService {
 
     return {
       id: row.id,
-      labId: row.lab_id, // Added mapping
+      labId: row.lab_id, 
+      lab_id: row.lab_id, // For frontend compatibility
       mode: row.mode,
       code: row.code,
       language: row.language,
       profileId: row.profile_id,
+      profile_id: row.profile_id, // For frontend compatibility
       createdAt: row.created_at,
+      created_at: row.created_at, // For frontend compatibility
       status: row.status,
+      score: row.score, // Added mapping
       result: JSON.parse(row.result_json)
     } as any;
   }
@@ -70,13 +74,17 @@ export class DatabaseService {
     const rows = this.db.prepare("SELECT * FROM submissions ORDER BY created_at DESC").all() as any[];
     return rows.map(row => ({
       id: row.id,
-      labId: row.lab_id, // Added mapping
+      labId: row.lab_id, 
+      lab_id: row.lab_id, // For frontend compatibility
       mode: row.mode,
       code: row.code,
       language: row.language,
       profileId: row.profile_id,
+      profile_id: row.profile_id, // For frontend compatibility
       createdAt: row.created_at,
+      created_at: row.created_at, // For frontend compatibility
       status: row.status,
+      score: row.score, // Added mapping
       result: JSON.parse(row.result_json)
     } as any));
   }

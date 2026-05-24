@@ -1,0 +1,25 @@
+
+========================================================================
+🛡️ CLOUD LAB INTERACTIVE TERMINAL - MULTI-ENVIRONMENT ACADEMIC PLATFORM
+========================================================================
+
+Bài thực hành: Phân tích Động Mã Độc WinlockerVB6Blacksod
+
+Không gian làm việc này đã được cô lập an toàn trong thư mục:
+workspaces/8f941c02-07f6-4251-9b38-e497af29c63a
+
+Các tệp mô phỏng đã được nạp sẵn:
+- File mã độc giả lập đặt tại: opt/malware/WinlockerVB6Blacksod.exe
+- File log strace đã có sẵn: strace.log
+- File log pcap đã có sẵn: ret.pcap
+
+Hãy viết một script Bash tên là "solution.sh" thực hiện:
+1. Đọc nội dung tệp strace.log để tìm đường dẫn tệp tin .txt bị mã hóa.
+2. Đọc tệp ret.pcap hoặc mô phỏng tcpdump lọc ra địa chỉ IP của C2 (mặc định: 172.25.0.100).
+3. In ra màn hình theo định dạng chính xác:
+   ENCRYPTED_FILE: <đường_dẫn>
+   C2_IP: <địa_chỉ_IP>
+
+Sau khi hoàn thành, gõ lệnh "exit" để thoát Terminal. 
+Hệ thống sẽ tự động quét workspace của bạn, chạy thử script "solution.sh", chấm điểm và lưu kết quả!
+========================================================================

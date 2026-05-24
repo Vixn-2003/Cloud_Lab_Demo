@@ -201,7 +201,7 @@ Two lines:
 The HMAC hex string.
     `,
     testcases: [
-      { input: "hello\nsecret", expectedOutput: "791da329e41416801905391bad965e634bb04b901dd15c898c56fa6d48227b2d" },
+      { input: "hello\nsecret", expectedOutput: "88aab3ede8d3adf94d26ab90d3bafd4a2083070c3bcce9c014ee04a443847c0b" },
     ],
   },
   lab_gen_hash: {
@@ -255,7 +255,7 @@ Phải giữ nguyên định dạng mặc định của OpenSSL: \`SHA256(stdin)
     testcases: [
       { 
         input: "hello", 
-        expectedOutput: `SHA256(stdin)= 791da329e41416801905391bad965e634bb04b901dd15c898c56fa6d48227b2d` 
+        expectedOutput: `SHA256(stdin)= 88aab3ede8d3adf94d26ab90d3bafd4a2083070c3bcce9c014ee04a443847c0b` 
       },
     ],
   },
@@ -296,7 +296,7 @@ Thực hiện tìm kiếm \`i\` (0 -> 100000) sao cho 6 ký tự đầu của ha
 Sử dụng script Python để thực hiện logic tìm kiếm này. Bạn có thể gọi Python từ trong file .sh này.
     `,
     testcases: [
-      { input: "ef7759", expectedOutput: "0" },
+      { input: "5feceb", expectedOutput: "0" },
     ],
   },
   lab_winlocker_analysis: {
@@ -304,7 +304,7 @@ Sử dụng script Python để thực hiện logic tìm kiếm này. Bạn có 
     title: "Dynamic Analysis of WinlockerVB6Blacksod",
     subjectId: "net_sec", // Assigning to network security, or crypto. Let's use net_sec.
     profileId: "malware_analysis_shell",
-    environmentType: "single_runtime",
+    environmentType: "single_machine",
     toolset: ["wine", "tcpdump", "strace", "bash"],
     statement: `
 ### Description
