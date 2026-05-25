@@ -363,7 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 
 *.env
-Document/
 # Logs
 logs
 *.log

@@ -1,0 +1,8 @@
+- [x] Backend: Update `ProblemRegistry.ts` with new profiles and problems
+- [x] Backend: Create `DatabaseService.ts` for SQLite persistence
+- [x] Backend: Update `LocalProcessRunner.ts` to support compilation and `stdin`
+- [x] Backend: Update `index.ts` to integrate DB and add `/problems` endpoint
+- [x] Frontend: Add problem selection dropdown in `App.tsx`
+- [x] Frontend: Add `stdin` input field in `App.tsx`
+- [x] Frontend: Refactor `App.tsx` for dynamic problem loading and state handling
+- [x] Verification: Test multiple languages and problem submissions.

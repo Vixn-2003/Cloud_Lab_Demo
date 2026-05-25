@@ -4,12 +4,34 @@ import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
 import { Server } from "socket.io";
 import { createServer } from "http";
+import multer from "multer";
 import { profiles, faculties, subjects, labs } from "./models/ProblemRegistry";
 import { SubmissionRecord, LabConfig, ExecutionProfile, ExecutionResult } from "./models/types";
 import { dbService } from "./services/DatabaseService";
 import { ExecutionServiceFactory } from "./services/ExecutionServiceFactory";
 import { logBus } from "./services/ExecutionLogBus";
 import { InteractiveTerminalService } from "./services/InteractiveTerminalService";
+import { LabtainerGradingService } from "./services/LabtainerGradingService";
+
+
+// Multer: memory storage, max 2MB, only accept text-based source code files
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // Increase limit to 10MB to support zip archives with logs
+  fileFilter: (_req, file, cb) => {
+    const allowed = [".py", ".sh", ".js", ".ts", ".java", ".cpp", ".c", ".txt", ".zip", ".tar.gz", ".tgz"];
+    const nameLower = file.originalname.toLowerCase();
+    let ext = "." + nameLower.split(".").pop();
+    if (nameLower.endsWith(".tar.gz")) {
+      ext = ".tar.gz";
+    }
+    if (allowed.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type '${ext}' not allowed. Accepted: ${allowed.join(", ")}`));
+    }
+  }
+});
 
 const app = express();
 const httpServer = createServer(app);
@@ -273,6 +295,141 @@ app.get("/submissions/:id", (req, res) => {
   const sub = dbService.getSubmission(req.params.id);
   if (!sub) return res.status(404).json({ error: "Not found "});
   res.json(sub);
+});
+
+// POST /upload-submit — Upload a source code file or Labtainer ZIP for grading
+// Body: multipart/form-data { file, profileId, labId }
+app.post("/upload-submit", upload.single("file"), async (req: any, res: any) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded. Send a file via the 'file' field." });
+  }
+
+  const { profileId, labId } = req.body;
+  const profile = profiles[profileId];
+  const lab = labs[labId];
+
+  if (!profile || !lab) {
+    return res.status(400).json({ error: "Invalid profileId or labId" });
+  }
+
+  const fileNameLower = req.file.originalname.toLowerCase();
+  const isZip = fileNameLower.endsWith(".zip") || fileNameLower.endsWith(".tar.gz") || fileNameLower.endsWith(".tgz");
+
+  // Read file content from memory buffer if it is source code, or mock it if zip
+  let code: string;
+  if (isZip) {
+    code = "# Labtainer ZIP Submission Archive";
+  } else {
+    try {
+      code = req.file.buffer.toString("utf8");
+    } catch (e: any) {
+      return res.status(400).json({ error: "Cannot read file as UTF-8 text. Only text source code files are supported." });
+    }
+  }
+
+  const executionId = uuidv4();
+
+  const submissionRecord: SubmissionRecord = {
+    id: executionId,
+    mode: "submit",
+    code,
+    language: isZip ? "labtainer" : profile.language,
+    profileId,
+    createdAt: new Date().toISOString(),
+    status: "queued"
+  };
+  (submissionRecord as any).labId = labId;
+  (submissionRecord as any).uploadedFileName = req.file.originalname;
+
+  res.json({ executionId, status: "queued", fileName: req.file.originalname });
+
+  // Run grading pipeline
+  (async () => {
+    if (isZip) {
+      // ZIP / Labtainer Archive Grading Flow
+      try {
+        logBus.emitStatus(executionId, "started");
+        io.to(executionId).emit("execution:status", { executionId, status: "streaming", message: "Extracting and parsing Labtainer zip archive..." });
+        
+        // Wait a short moment to simulate processing and let the frontend connect
+        await new Promise(r => setTimeout(r, 800));
+
+        const report = LabtainerGradingService.gradeZip(req.file.buffer, labId);
+
+        if (report.status === "failed") {
+          throw new Error(report.error || "Grading failed");
+        }
+
+        // Add uploadedFileName to report for unified schema
+        (report as any).uploadedFileName = req.file.originalname;
+
+        submissionRecord.status = "finished";
+        submissionRecord.result = report;
+        (submissionRecord as any).score = report.score;
+        dbService.saveSubmission(submissionRecord);
+
+        io.to(executionId).emit("execution:status", { executionId, status: "finished", payload: report });
+        console.log(`[Upload ZIP Submit] Graded ${req.file.originalname} for lab ${labId}: ${report.score}/100`);
+
+      } catch (error: any) {
+        console.error(`[Upload ZIP Grading Error] ${executionId}: ${error.message}`);
+        io.to(executionId).emit("execution:status", { executionId, status: "failed", payload: { error: error.message } });
+      }
+    } else {
+      // Standard Source Code File Execution/Grading Flow
+      const runner = ExecutionServiceFactory.getRunner();
+      try {
+        logBus.emitStatus(executionId, "started");
+        const testResults = [];
+        let passedTests = 0;
+
+        for (let i = 0; i < lab.testcases.length; i++) {
+          const tc = lab.testcases[i];
+          io.to(executionId).emit("execution:status", { executionId, status: "streaming", message: `Running testcase ${i+1}/${lab.testcases.length}` });
+
+          const execResult = await runner.executeSubmit(code, tc.input, profile, executionId);
+
+          const actualOutput = (execResult.stdout || "").trim();
+          const expectedOutput = tc.expectedOutput.trim();
+          const passed = actualOutput === expectedOutput && execResult.exitCode === 0;
+          if (passed) passedTests++;
+
+          testResults.push({
+            index: i + 1,
+            input: tc.input,
+            expectedOutput,
+            actualOutput,
+            passed,
+            executionTimeMs: execResult.executionTimeMs,
+            stderr: execResult.stderr
+          });
+        }
+
+        const score = Math.round((passedTests / lab.testcases.length) * 100);
+        const finalResult = {
+          status: "graded",
+          mode: "submit",
+          score,
+          passedTests,
+          totalTests: lab.testcases.length,
+          testResults,
+          uploadedFileName: req.file.originalname
+        };
+
+        submissionRecord.status = "finished";
+        submissionRecord.result = finalResult;
+        (submissionRecord as any).score = score;
+        dbService.saveSubmission(submissionRecord);
+
+        io.to(executionId).emit("execution:status", { executionId, status: "finished", payload: finalResult });
+        console.log(`[Upload Submit] Graded ${req.file.originalname} for lab ${labId}: ${score}/100`);
+
+      } catch (error: any) {
+        console.error(`[Upload Grading Error] ${executionId}: ${error.message}`);
+        io.to(executionId).emit("execution:status", { executionId, status: "failed", payload: { error: error.message } });
+      }
+    }
+  })();
 });
 
 httpServer.listen(PORT, () => {

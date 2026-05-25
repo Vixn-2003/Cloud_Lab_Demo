@@ -1,0 +1,3 @@
+nmap_scan : Performance: True
+identify_ssh : Performance: True
+firewall_rules : Performance: False

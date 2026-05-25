@@ -65,7 +65,10 @@ export class DockerRunner implements ExecutionService {
         "-i", // Interactive for stdin
         "--network", profile.networkPolicy === "disabled" ? "none" : profile.networkPolicy,
         "--memory", "256m",
+        "--memory-swap", "256m",
         "--cpus", "0.5",
+        "--pids-limit", "100",
+        "--security-opt", "no-new-privileges:true",
         "-v", `${hostPath}:/workspace`,
         "-w", "/workspace",
         profile.dockerImage || "ubuntu:22.04"

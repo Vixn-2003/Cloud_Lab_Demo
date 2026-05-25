@@ -77,6 +77,30 @@ export async function submitCode(
   });
 }
 
+export async function submitFile(
+  file: File,
+  profileId: string,
+  labId: string
+): Promise<SubmitResponse & { fileName?: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('profileId', profileId);
+  formData.append('labId', labId);
+
+  const res = await fetch(`${API_BASE}/upload-submit`, {
+    method: 'POST',
+    // Do NOT set Content-Type header — browser sets it automatically with correct multipart boundary
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(errBody.error || `API Error: ${res.status}`);
+  }
+
+  return res.json();
+}
+
 // === Submissions ===
 export async function getSubmissions(): Promise<SubmissionRecord[]> {
   return fetchApi<SubmissionRecord[]>('/submissions');

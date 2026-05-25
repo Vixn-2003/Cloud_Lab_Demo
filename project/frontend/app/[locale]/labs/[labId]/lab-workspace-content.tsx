@@ -22,6 +22,7 @@ import {
   BookOpen,
   AlertCircle,
   RotateCcw,
+  Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
@@ -47,8 +48,9 @@ import {
 import { ScoreDisplay, ScoreBadge } from '@/components/score-display';
 import { CodeEditor } from '@/components/code-editor';
 import { ConsoleOutput } from '@/components/console-output';
+import { FileUploadZone } from '@/components/file-upload-zone';
 import { useAppStore } from '@/lib/store';
-import { getLab, getProfile, getSubmissions, runCode, submitCode, getFaculties, getSubjects, getLabs } from '@/lib/api';
+import { getLab, getProfile, getSubmissions, runCode, submitCode, submitFile, getFaculties, getSubjects, getLabs } from '@/lib/api';
 import { useSocket } from '@/hooks/use-socket';
 import { WebTerminal } from '@/components/web-terminal';
 import { LabWorkspaceSkeleton } from './lab-workspace-skeleton';
@@ -107,6 +109,7 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
   const [code, setCode] = useState('');
   const [stdin, setStdin] = useState('');
   const [activeTab, setActiveTab] = useState<'instructions' | 'result' | 'history'>('instructions');
+  const [editorTab, setEditorTab] = useState<'code' | 'upload'>('code');
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
@@ -375,6 +378,21 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
       toast.error(`Failed to submit: ${err.message}`);
     }
   }, [code, profile, lab, subscribeToExecution]);
+
+  const handleFileSubmit = useCallback(async (file: File) => {
+    if (!profile || !lab) return;
+    setIsSubmitting(true);
+    setLogs([]);
+    setExecutionMetadata(null);
+    toast.info(`Đang nộp file "${file.name}" để chấm điểm...`);
+    try {
+      const res = await submitFile(file, profile.id, lab.id);
+      subscribeToExecution(res.executionId);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      toast.error(`Nộp file thất bại: ${err.message}`);
+    }
+  }, [profile, lab, subscribeToExecution]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -736,59 +754,136 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
         {/* Right Panel - Editor & Console / WebTerminal */}
         <ResizablePanel defaultSize={60} minSize={35}>
           {lab.environmentType === 'single_machine' || lab.environmentType === 'multi_node' ? (
-            <WebTerminal labId={lab.id} />
-          ) : (
             <div className="flex h-full flex-col">
-              {/* Editor Header */}
-              <div className="flex items-center justify-between border-b border-border px-4 py-2">
-                <div className="flex items-center gap-2">
-                  <FileCode className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{filename}</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {profile.displayName}
-                  </Badge>
+              {/* Terminal Tab Switcher: Terminal / Upload ZIP */}
+              <div className="flex items-center border-b border-border px-4 gap-4">
+                <button
+                  onClick={() => setEditorTab('code')}
+                  className={`flex items-center gap-1.5 py-2.5 text-sm border-b-2 transition-colors ${
+                    editorTab === 'code'
+                      ? 'border-primary text-primary font-medium'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <TerminalIcon className="h-3.5 w-3.5" />
+                  Web Terminal
+                </button>
+                <button
+                  onClick={() => setEditorTab('upload')}
+                  className={`flex items-center gap-1.5 py-2.5 text-sm border-b-2 transition-colors ${
+                    editorTab === 'upload'
+                      ? 'border-primary text-primary font-medium'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Nộp Labtainer ZIP
+                </button>
+                <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground py-2.5">
+                  <span className="font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded">Labtainer VM Environment</span>
                 </div>
               </div>
 
-              {/* Editor and Console */}
-              <ResizablePanelGroup direction="vertical" className="flex-1">
-                <ResizablePanel defaultSize={70} minSize={30}>
-                  <CodeEditor
-                    value={code}
-                    onChange={setCode}
-                    language={profile.language}
-                  />
-                </ResizablePanel>
+              {editorTab === 'upload' ? (
+                <FileUploadZone
+                  onSubmit={handleFileSubmit}
+                  isSubmitting={isSubmitting}
+                  isLabtainer={true}
+                  className="flex-1"
+                />
+              ) : (
+                <WebTerminal labId={lab.id} />
+              )}
+            </div>
+          ) : (
+            <div className="flex h-full flex-col">
+              {/* Editor Tab Switcher: Code / Upload */}
+              <div className="flex items-center border-b border-border px-4 gap-4">
+                <button
+                  onClick={() => setEditorTab('code')}
+                  className={`flex items-center gap-1.5 py-2.5 text-sm border-b-2 transition-colors ${
+                    editorTab === 'code'
+                      ? 'border-primary text-primary font-medium'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <FileCode className="h-3.5 w-3.5" />
+                  Soạn code
+                </button>
+                <button
+                  onClick={() => setEditorTab('upload')}
+                  className={`flex items-center gap-1.5 py-2.5 text-sm border-b-2 transition-colors ${
+                    editorTab === 'upload'
+                      ? 'border-primary text-primary font-medium'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Upload file
+                </button>
+                <div className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground py-2.5">
+                  <span className="font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded">{profile.displayName}</span>
+                </div>
+              </div>
 
-                <ResizableHandle />
+              {editorTab === 'upload' ? (
+                <FileUploadZone
+                  onSubmit={handleFileSubmit}
+                  isSubmitting={isSubmitting}
+                  profileLanguage={profile.displayName}
+                  className="flex-1"
+                />
+              ) : (
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  {/* Editor Header */}
+                  <div className="flex items-center justify-between border-b border-border px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <FileCode className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{filename}</span>
+                    </div>
+                  </div>
 
-                <ResizablePanel defaultSize={30} minSize={10}>
-                  <div className="flex h-full flex-col border-t border-border bg-[oklch(0.11_0.005_285)]">
-                    <div
-                      className="flex items-center justify-between border-b border-border px-4 py-2 cursor-pointer hover:bg-accent/50"
-                      onClick={() => setConsoleExpanded(!consoleExpanded)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <TerminalIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">Console</span>
-                        {isRunning && (
-                          <Badge variant="secondary" className="bg-primary/10 text-primary animate-pulse">
-                            Running...
-                          </Badge>
+                  {/* Editor and Console */}
+                  <ResizablePanelGroup direction="vertical" className="flex-1">
+                    <ResizablePanel defaultSize={70} minSize={30}>
+                      <CodeEditor
+                        value={code}
+                        onChange={setCode}
+                        language={profile.language}
+                      />
+                    </ResizablePanel>
+
+                    <ResizableHandle />
+
+                    <ResizablePanel defaultSize={30} minSize={10}>
+                      <div className="flex h-full flex-col border-t border-border bg-[oklch(0.11_0.005_285)]">
+                        <div
+                          className="flex items-center justify-between border-b border-border px-4 py-2 cursor-pointer hover:bg-accent/50"
+                          onClick={() => setConsoleExpanded(!consoleExpanded)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <TerminalIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">Console</span>
+                            {isRunning && (
+                              <Badge variant="secondary" className="bg-primary/10 text-primary animate-pulse">
+                                Running...
+                              </Badge>
+                            )}
+                          </div>
+                          {consoleExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        {consoleExpanded && (
+                          <ConsoleOutput logs={logs} metadata={executionMetadata} />
                         )}
                       </div>
-                      {consoleExpanded ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    {consoleExpanded && (
-                      <ConsoleOutput logs={logs} metadata={executionMetadata} />
-                    )}
-                  </div>
-                </ResizablePanel>
-              </ResizablePanelGroup>
+                    </ResizablePanel>
+                  </ResizablePanelGroup>
+                </div>
+              )}
             </div>
           )}
         </ResizablePanel>

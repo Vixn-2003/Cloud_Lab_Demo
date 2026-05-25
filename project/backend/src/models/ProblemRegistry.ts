@@ -81,7 +81,7 @@ export const profiles: Record<string, ExecutionProfile> = {
     resourceLimits: { maxOutputBytes: 20000 },
     networkPolicy: "isolated",
     gradingStrategy: "tool_output_match",
-    dockerImage: "ubuntu:22.04",
+    dockerImage: "python:3.11-slim",
   },
   malware_analysis_shell: {
     id: "malware_analysis_shell",
@@ -337,4 +337,31 @@ C2_IP: <địa_chỉ_IP>
       },
     ],
   },
+  lab_labtainer_nmap: {
+    id: "lab_labtainer_nmap",
+    title: "Network Scanning with Labtainer",
+    subjectId: "net_sec",
+    profileId: "security_shell",
+    environmentType: "multi_node",
+    toolset: ["Nmap", "Labtainer", "Bash"],
+    statement: `
+### Hướng Dẫn Thực Hành Labtainer Offline (Giai đoạn 1)
+Bài tập này được thiết kế để học viên làm quen với việc thu thập và phân tích lưu lượng mạng sử dụng công cụ Nmap trên môi trường Labtainer.
+
+**Cách nộp bài**:
+1. Thực hiện chạy lab offline trên môi trường Labtainer cá nhân:
+   \`\`\`bash
+   labtainer nmap-lab
+   \`\`\`
+2. Hoàn thành việc quét cổng máy chủ và xác định các lỗ hổng.
+3. Chạy lệnh xuất kết quả:
+   \`\`\`bash
+   stoplab nmap-lab
+   \`\`\`
+4. Lấy tệp tin nén kết quả nộp bài dạng \`nmap-lab.<email>.zip\` được sinh ra trong thư mục chuyển giao của Labtainer.
+5. Chuyển sang Tab **Nộp file Solution ZIP** ở bên cạnh, kéo thả tệp tin ZIP này vào và bấm **Submit File** để hệ thống tự động chấm điểm!
+    `,
+    testcases: []
+  }
 };
+

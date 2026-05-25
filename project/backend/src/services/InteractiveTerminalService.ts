@@ -2,6 +2,39 @@ import * as os from "os";
 import * as fs from "fs";
 import * as path from "path";
 import { Server, Socket } from "socket.io";
+import { execSync } from "child_process";
+import { NpsLabtainerService } from "./NpsLabtainerService";
+
+function isDockerRunning(): boolean {
+  try {
+    execSync("docker ps", { stdio: "ignore", timeout: 2000 });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function getLabtainerContainer(labId: string, studentId: string): string | null {
+  try {
+    const output = execSync("docker ps --format \"{{.Names}}\"").toString();
+    const names = output.split("\n").map(n => n.trim()).filter(Boolean);
+    
+    const studentClean = studentId.toLowerCase();
+    const labClean = labId.replace("lab_labtainer_", "").replace("lab_", "").toLowerCase();
+    
+    // Find a container that contains both the lab identifier and the student identifier
+    const match = names.find(name => {
+      const lowerName = name.toLowerCase();
+      return lowerName.includes(labClean) && lowerName.includes(studentClean);
+    });
+    
+    return match || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+
 
 // Dynamic load node-pty to prevent console attachment crash on headless environments (Windows conpty issues)
 let pty: any = null;
@@ -239,60 +272,115 @@ Hệ thống sẽ tự động quét workspace của bạn, chạy thử script 
       fs.writeFileSync(path.join(workspacePath, "instructions.txt"), instructions);
     }
 
-    let ptyProcess: any = null;
+    // Run spawning logic asynchronously
+    (async () => {
+      let ptyProcess: any = null;
 
-    if (pty) {
-      try {
-        let shell = "bash";
-        if (os.platform() === "win32") {
-          const gitBashPath = "C:\\Program Files\\Git\\bin\\bash.exe";
-          const gitBashPathLocal = "C:\\Program Files (x86)\\Git\\bin\\bash.exe";
-          if (fs.existsSync(gitBashPath)) {
-            shell = gitBashPath;
-          } else if (fs.existsSync(gitBashPathLocal)) {
-            shell = gitBashPathLocal;
-          } else {
-            throw new Error("No bash executable found on Windows host. Using MockPTY.");
+      if (pty) {
+        try {
+          if (isDockerRunning()) {
+            const isLabtainerLab = labId.startsWith("lab_labtainer_");
+            
+            if (isLabtainerLab) {
+              // Gọi Labtainer Core khởi chạy lab
+              console.log(`[PTY] Calling NPS Labtainer Core to start lab ${labId} for user ${sessionId}...`);
+              await NpsLabtainerService.startLab(labId, sessionId);
+              
+              // Định vị container Docker của Labtainer
+              const containerName = getLabtainerContainer(labId, sessionId);
+              if (containerName) {
+                console.log(`[PTY] Found official Labtainer container: ${containerName}. Attaching terminal exec...`);
+                ptyProcess = pty.spawn("docker", ["exec", "-it", containerName, "bash"], {
+                  name: "xterm-color",
+                  cols: 80,
+                  rows: 30,
+                  env: process.env as any
+                });
+                
+                (ptyProcess as any).dockerContainerName = containerName;
+                (ptyProcess as any).isNpsLabtainer = true;
+              } else {
+                console.warn(`[PTY] Official Labtainer container not found for lab ${labId}. Falling back to virtual shell.`);
+              }
+            } else {
+              // Giai đoạn 2: Spawn Docker Container thực tế cho bài lab thường
+              const containerName = `cloudlab_terminal_${sessionId}`;
+              const image = labId === "lab_winlocker_analysis" ? "malware-env:latest" : "ubuntu:22.04";
+              const hostPath = path.resolve(workspacePath);
+              
+              try {
+                console.log(`[PTY] Spawning Docker container ${containerName} using image ${image} (host path: ${hostPath})...`);
+                execSync(`docker run -d --name ${containerName} --memory=512m --memory-swap=512m --cpus=0.5 --pids-limit=100 --security-opt=no-new-privileges:true -v "${hostPath}:/workspace" -w /workspace ${image} tail -f /dev/null`, { stdio: "ignore", timeout: 8000 });
+                
+                ptyProcess = pty.spawn("docker", ["exec", "-it", containerName, "bash"], {
+                  name: "xterm-color",
+                  cols: 80,
+                  rows: 30,
+                  env: process.env as any
+                });
+                
+                (ptyProcess as any).dockerContainerName = containerName;
+                console.log(`[PTY] Connected interactive terminal session to Docker container ${containerName}`);
+              } catch (dockerErr: any) {
+                console.warn(`[PTY] Failed to spawn Docker container: ${dockerErr.message}. Falling back to host shell...`);
+              }
+            }
           }
+          
+          // Fallback sang Host shell nếu Docker không chạy hoặc spawn container lỗi
+          if (!ptyProcess) {
+            let shell = "bash";
+            if (os.platform() === "win32") {
+              const gitBashPath = "C:\\Program Files\\Git\\bin\\bash.exe";
+              const gitBashPathLocal = "C:\\Program Files (x86)\\Git\\bin\\bash.exe";
+              if (fs.existsSync(gitBashPath)) {
+                shell = gitBashPath;
+              } else if (fs.existsSync(gitBashPathLocal)) {
+                shell = gitBashPathLocal;
+              } else {
+                throw new Error("No bash executable found on Windows host. Using MockPTY.");
+              }
+            }
+            ptyProcess = pty.spawn(shell, [], {
+              name: "xterm-color",
+              cols: 80,
+              rows: 30,
+              cwd: workspacePath,
+              env: process.env as any
+            });
+            console.log(`[PTY] Spawned native host process shell successfully: ${shell}`);
+          }
+        } catch (spawnErr: any) {
+          console.warn("[PTY] Failed to spawn native PTY shell. Falling back to MockPTY.", spawnErr.message);
+          ptyProcess = new MockPTY(workspacePath);
         }
-        ptyProcess = pty.spawn(shell, [], {
-          name: "xterm-color",
-          cols: 80,
-          rows: 30,
-          cwd: workspacePath,
-          env: process.env as any
-        });
-        console.log(`[PTY] Spawned native process shell successfully: ${shell}`);
-      } catch (spawnErr: any) {
-        console.warn("[PTY] Failed to spawn native PTY shell. Falling back to MockPTY.", spawnErr.message);
+      } else {
         ptyProcess = new MockPTY(workspacePath);
       }
-    } else {
-      ptyProcess = new MockPTY(workspacePath);
-    }
 
-    this.ptySessions.set(sessionId, ptyProcess);
+      this.ptySessions.set(sessionId, ptyProcess);
 
-    // If instructions exist, print them on terminal connect!
-    const instructionsPath = path.join(workspacePath, "instructions.txt");
-    if (fs.existsSync(instructionsPath)) {
-      const promptText = fs.readFileSync(instructionsPath, "utf8").replace(/\n/g, "\r\n");
-      setTimeout(() => {
-        socket.emit("terminal:output", { sessionId, data: promptText + "\r\n" });
-      }, 500);
-    }
+      // If instructions exist, print them on terminal connect!
+      const instructionsPath = path.join(workspacePath, "instructions.txt");
+      if (fs.existsSync(instructionsPath)) {
+        const promptText = fs.readFileSync(instructionsPath, "utf8").replace(/\n/g, "\r\n");
+        setTimeout(() => {
+          socket.emit("terminal:output", { sessionId, data: promptText + "\r\n" });
+        }, 500);
+      }
 
-    // Stream output from PTY to WebSocket
-    ptyProcess.onData((data: string) => {
-      socket.emit("terminal:output", { sessionId, data });
-    });
+      // Stream output from PTY to WebSocket
+      ptyProcess.onData((data: string) => {
+        socket.emit("terminal:output", { sessionId, data });
+      });
 
-    ptyProcess.onExit(async ({ exitCode, signal }: any) => {
-      console.log(`[PTY] Session ${sessionId} exited with code ${exitCode}`);
-      await this.gradeSession(sessionId, socket);
-      this.cleanupSession(sessionId);
-      socket.emit("terminal:exit", { sessionId, exitCode });
-    });
+      ptyProcess.onExit(async ({ exitCode, signal }: any) => {
+        console.log(`[PTY] Session ${sessionId} exited with code ${exitCode}`);
+        await this.gradeSession(sessionId, socket);
+        this.cleanupSession(sessionId);
+        socket.emit("terminal:exit", { sessionId, exitCode });
+      });
+    })();
   }
 
   public writeData(sessionId: string, data: string) {
@@ -318,7 +406,54 @@ Hệ thống sẽ tự động quét workspace của bạn, chạy thử script 
 
     console.log(`[Grading] Starting grading for session ${sessionId}, lab ${labId}`);
     const workspacePath = path.resolve(process.cwd(), "workspaces", sessionId);
+    const { dbService } = require("./DatabaseService");
+    const submissionId = sessionId;
     
+    // Kiểm tra nếu là Labtainer lab thật của NPS
+    const isLabtainerLab = labId.startsWith("lab_labtainer_");
+
+    if (isLabtainerLab) {
+      try {
+        const report = await NpsLabtainerService.stopAndGradeLab(labId, sessionId);
+        const score = report.score;
+        
+        const finalResult = {
+          status: "graded",
+          mode: "submit",
+          score,
+          passedTests: report.passedTests,
+          totalTests: report.totalTests,
+          testResults: report.testResults
+        };
+        
+        const submissionRecord = {
+          id: submissionId,
+          labId: labId,
+          profileId: "security_shell",
+          mode: "submit",
+          code: "# Official NPS Labtainer Session Uploaded Results",
+          language: "shell",
+          status: "finished",
+          score,
+          result: finalResult,
+          createdAt: new Date().toISOString()
+        };
+        
+        dbService.saveSubmission(submissionRecord);
+        
+        socket.nsp.to(sessionId).emit("execution:status", { 
+          executionId: sessionId, 
+          status: "finished", 
+          payload: finalResult 
+        });
+        
+        console.log(`[Grading] Official Labtainer graded session ${sessionId}. Score: ${score}%`);
+        return;
+      } catch (err: any) {
+        console.error(`[Grading Error] NPS Labtainer grading failed:`, err.message);
+      }
+    }
+
     let score = 0;
     let stdout = "";
     let stderr = "";
@@ -371,10 +506,6 @@ Hệ thống sẽ tự động quét workspace của bạn, chạy thử script 
         score = 100;
         stdout = "Interactive session completed.";
       }
-      
-      const { dbService } = require("./DatabaseService");
-      // Use sessionId as the submission record ID to allow clients to query grading results
-      const submissionId = sessionId;
       
       const finalResult = {
         status: "graded",
@@ -429,6 +560,17 @@ Hệ thống sẽ tự động quét workspace của bạn, chạy thử script 
   public cleanupSession(sessionId: string) {
     const ptyProcess = this.ptySessions.get(sessionId);
     if (ptyProcess) {
+      // Dọn dẹp container Docker nếu có chạy (Garbage Collection)
+      const containerName = (ptyProcess as any).dockerContainerName;
+      if (containerName) {
+        try {
+          console.log(`[PTY GC] Stopping and removing container for session ${sessionId}: ${containerName}`);
+          execSync(`docker stop ${containerName} && docker rm ${containerName}`, { stdio: "ignore", timeout: 5000 });
+        } catch (err: any) {
+          console.error(`[PTY GC Error] Failed to stop/rm container ${containerName}:`, err.message);
+        }
+      }
+
       try {
         ptyProcess.kill();
       } catch (e) {}
