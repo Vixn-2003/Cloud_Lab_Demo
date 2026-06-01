@@ -98,10 +98,11 @@ export function ScoreDisplay({
 interface ScoreBadgeProps {
   score: number | null | undefined;
   maxScore?: number;
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
-export function ScoreBadge({ score, maxScore = 100, className }: ScoreBadgeProps) {
+export function ScoreBadge({ score, maxScore = 100, size = 'sm', className }: ScoreBadgeProps) {
   const variant = getScoreVariant(score, maxScore);
 
   if (score === null || score === undefined) {
@@ -115,6 +116,7 @@ export function ScoreBadge({ score, maxScore = 100, className }: ScoreBadgeProps
       className={cn(
         'inline-flex items-center gap-1 font-medium',
         variantColors[variant].split(' ')[0],
+        sizeClasses[size],
         className
       )}
     >

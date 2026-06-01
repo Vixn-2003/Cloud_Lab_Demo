@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations, useFormatter } from 'next-intl';
+import { useTranslations, useFormatter, useNow } from 'next-intl';
 import { Link } from '@/src/i18n/navigation';
 import {
   Search,
@@ -51,6 +51,7 @@ export function LabBrowserContent() {
   const t = useTranslations('labs');
   const tCommon = useTranslations('common');
   const format = useFormatter();
+  const now = useNow();
   const searchParams = useSearchParams();
   
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -142,7 +143,7 @@ export function LabBrowserContent() {
   function formatTimeAgo(dateString?: string) {
     if (!dateString) return null;
     const date = new Date(dateString);
-    return format.relativeTime(date);
+    return format.relativeTime(date, { now });
   }
 
   function getLabCTA(lab: Lab): { label: string; icon: any; variant: 'default' | 'outline' | 'secondary' | 'destructive' } {

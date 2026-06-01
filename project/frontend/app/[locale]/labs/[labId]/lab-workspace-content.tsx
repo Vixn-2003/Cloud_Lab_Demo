@@ -303,6 +303,19 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
               exitCode: res.exitCode ?? 0,
               status: 'finished',
             });
+            
+            // Populate logs from the final payload in case WebSocket logs streaming packets are lost/missed due to race conditions
+            const finalLogs: ExecutionLog[] = [];
+            if (res.stdout) {
+              finalLogs.push({ stream: 'stdout', data: res.stdout, timestamp: Date.now() });
+            }
+            if (res.stderr) {
+              finalLogs.push({ stream: 'stderr', data: res.stderr, timestamp: Date.now() });
+            }
+            if (finalLogs.length > 0) {
+              setLogs(finalLogs);
+            }
+            
             toast.success('Run execution finished');
           }
         } else {
@@ -317,6 +330,21 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
           exitCode: errPayload?.exitCode ?? 1,
           status: 'failed',
         });
+        
+        // Also populate logs for failed executions (like compilation errors or run crashes)
+        const finalLogs: ExecutionLog[] = [];
+        if (errPayload?.stdout) {
+          finalLogs.push({ stream: 'stdout', data: errPayload.stdout, timestamp: Date.now() });
+        }
+        if (errPayload?.stderr) {
+          finalLogs.push({ stream: 'stderr', data: errPayload.stderr, timestamp: Date.now() });
+        } else if (errPayload?.error) {
+          finalLogs.push({ stream: 'stderr', data: errPayload.error, timestamp: Date.now() });
+        }
+        if (finalLogs.length > 0) {
+          setLogs(finalLogs);
+        }
+        
         toast.error(`Execution failed: ${errPayload?.error || 'Unknown error'}`);
       } else if (status === 'timeout') {
         setIsRunning(false);
@@ -596,6 +624,50 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
                         {lab.statement}
                       </ReactMarkdown>
                     </div>
+
+                    {/* Examples Section */}
+                    {lab.examples && lab.examples.length > 0 && (
+                      <div className="space-y-4 pt-4 border-t border-border mt-6">
+                        <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                          <FileCode className="h-4 w-4 text-primary" />
+                          Ví dụ mẫu (Examples)
+                        </h4>
+                        <div className="space-y-4">
+                          {lab.examples.map((ex, index) => (
+                            <div key={index} className="rounded-lg border border-border bg-accent/5 p-3 space-y-3">
+                              <div className="flex items-center justify-between text-xs font-semibold select-none">
+                                <span className="text-muted-foreground">Ví dụ #{index + 1}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-[11px] font-medium text-primary hover:text-primary-foreground hover:bg-primary/95 rounded px-2"
+                                  onClick={() => {
+                                    setStdin(ex.input);
+                                    toast.success(`Đã điền Input của Ví dụ #${index + 1} vào ô Custom Test Input!`);
+                                  }}
+                                >
+                                  Dùng làm Custom Input
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3 text-xs">
+                                <div>
+                                  <span className="text-muted-foreground font-semibold block mb-1">Input mẫu:</span>
+                                  <pre className="rounded bg-background/50 border border-border/40 p-2 font-mono text-[11px] overflow-x-auto whitespace-pre">
+                                    {ex.input}
+                                  </pre>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground font-semibold block mb-1">Output mẫu:</span>
+                                  <pre className="rounded bg-background/50 border border-border/40 p-2 font-mono text-[11px] overflow-x-auto whitespace-pre">
+                                    {ex.output}
+                                  </pre>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Execution Environment Detail Card */}
                     <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3 mt-6 shadow-xs">

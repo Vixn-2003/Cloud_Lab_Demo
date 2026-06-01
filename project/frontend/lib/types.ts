@@ -28,6 +28,10 @@ export interface Lab {
   profileId: string;
   environmentType: 'single_runtime' | 'single_machine' | 'multi_node';
   toolset?: string[];
+  examples?: {
+    input: string;
+    output: string;
+  }[];
   // Student workflow fields
   subjectId?: string;
   subjectTitle?: string;

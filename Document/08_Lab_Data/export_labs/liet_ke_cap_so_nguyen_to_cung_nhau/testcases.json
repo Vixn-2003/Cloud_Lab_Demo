@@ -1,0 +1,14 @@
+[
+  {
+    "input": "5\n3 7 9 6 13",
+    "expectedOutput": "3 7\n3 13\n6 7\n6 13\n7 9\n7 13\n9 13"
+  },
+  {
+    "input": "3\n2 4 8",
+    "expectedOutput": ""
+  },
+  {
+    "input": "4\n5 10 15 7",
+    "expectedOutput": "5 7\n7 10\n7 15"
+  }
+]

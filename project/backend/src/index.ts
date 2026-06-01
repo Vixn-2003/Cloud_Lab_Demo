@@ -161,6 +161,7 @@ app.get("/profiles/:id", (req, res) => {
     osFamily: profile.osFamily,
     language: profile.language,
     version: profile.version,
+    extension: profile.extension,
     timeoutMs: profile.timeoutMs,
     gradingStrategy: profile.gradingStrategy
   });

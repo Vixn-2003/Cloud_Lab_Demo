@@ -1,82 +1,59 @@
-# Walkthrough: Thiết Lập Giới Hạn Tài Nguyên Docker & Bảo Mật Sandbox (Enterprise Stabilization)
+# Nhật Ký Thực Thi (Walkthrough) — Tích Hợp & Kiểm Thử 7 Bài Toán Lập Trình Mới
 
-## 🎯 1. Tổng Quan Thành Tựu
-
-Đã triển khai và cấu hình thành công **Hệ thống giới hạn tài nguyên cứng (Docker Resource Limits)** và **Chính sách bảo mật Sandbox** tối ưu hóa cho toàn bộ môi trường chạy mã nguồn sinh viên (Monaco Code Runner) và Web Terminal ảo tương tác (Standard Web Terminal) của nền tảng Cloud Lab.
-
-Hệ thống đã đạt tiêu chuẩn thương mại **Enterprise-grade**, ngăn chặn tuyệt đối các hành vi phá hoại hệ thống host server từ phía container học viên.
+Tài liệu này tổng hợp toàn bộ các thay đổi mã nguồn, giải thuật tối ưu và kết quả thử nghiệm thực tế cho **7 bài toán lập trình mới** được đưa vào hệ thống Online Coding Lab.
 
 ---
 
-## 🛠️ 2. Các Thành Phần Kỹ Thuật Đã Triển Khai
+## 🛠️ Thay Đổi Đã Thực Hiện
 
-1.  **Thiết lập Giới hạn trong `DockerRunner.ts` (Monaco Runner)**:
-    *   Giới hạn RAM cứng tối đa ở mức `256m`.
-    *   Tự động khóa phân vùng Swap (`--memory-swap=256m`) để tránh nghẽn đĩa host.
-    *   Giới hạn CPU cứng tối đa ở mức `0.5` Core.
-    *   Giới hạn tối đa `100` tiến trình (`--pids-limit=100`) để triệt tiêu các đòn tấn công nhân bản vô tận (**Fork Bomb**).
-    *   Chặn leo thang quyền root (`--security-opt=no-new-privileges:true`).
+### 1. Đăng Ký Cấu HÌnh Bài Lab
+- **Tệp chỉnh sửa**: [ProblemRegistry.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/models/ProblemRegistry.ts).
 
-2.  **Thiết lập Giới hạn trong `InteractiveTerminalService.ts` (Standard Web Terminal)**:
-    *   Trước đây: Container Terminal ảo khởi chạy không có bất kỳ cấu hình bảo vệ hay giới hạn tài nguyên nào.
-    *   Hiện tại: Áp dụng toàn diện RAM `512m`, Swap `512m`, CPU `0.5` Core, `100` PIDs limit, và cấm leo thang đặc quyền `no-new-privileges:true`.
+### 2. Phát Triển Bộ Mã Nguồn Mẫu (Reference Solutions)
+- **Hồ sơ sử dụng**: `python_basic` (Python 3).
 
-3.  **Xây dựng Kịch Bản Xác Minh Tự Động (`test_resource_limits.js`)**:
-    *   Hiện thực hóa kiểm thử tích hợp 3 ca phá hoại phổ biến: ngốn RAM quá 256MB, vòng lặp CPU vô tận, và Fork Bomb sinh tiến trình.
+### 3. Sửa Lỗi Console Rỗng khi Chạy Thử (Run Code)
+- **Tệp chỉnh sửa**: [lab-workspace-content.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/[locale]/labs/[labId]/lab-workspace-content.tsx).
+
+### 4. Sửa Lỗi Hiển Thị Đuôi File Ở Workspace Editor
+- **Tệp chỉnh sửa**: [index.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/index.ts).
+- **Nguyên nhân bug**: Khi lấy thông tin cấu hình qua API `GET /profiles/:id`, Backend bỏ sót không trả về trường `extension`. Do đó trên Frontend, biến `profile.extension` bị `undefined`, khiến tên tệp hiển thị ở tiêu đề tab Workspace Editor bị rơi vào fallback `.sh` (`Main.sh`), mặc dù môi trường thực thi của bài toán thực tế là Python 3 (`python_basic`).
+- **Giải pháp**: Bổ sung trường `extension: profile.extension` vào trong đối tượng JSON trả về của endpoint `GET /profiles/:id` ở Backend. Khi trang tải lại, Frontend nhận diện chính xác đuôi `.py`, giúp tiêu đề tab hiển thị đúng là `Main.py` (hoặc `.cpp`, `.java` tương ứng với từng bài lab).
+
+### 5. Triển Khai Tách Biệt Ví Dụ Mẫu (Examples) & Bộ Testcases (Testcases) Ẩn
+- **Thay đổi kiểu dữ liệu**: Bổ sung trường `examples` dạng `{ input: string; output: string }[]` vào `LabConfig` ở Backend và `Lab` ở Frontend.
+- **Nâng cấp UI Workspace**: Hiển thị khu vực **Ví dụ mẫu (Examples)** cực kỳ đẹp mắt kèm nút bấm **"Dùng làm Custom Input"** tiện lợi cho sinh viên.
+
+### 6. Sửa Lỗi Cảnh Báo ENVIRONMENT_FALLBACK của next-intl
+- **Tệp chỉnh sửa**:
+  - [lab-browser-content.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/[locale]/labs/lab-browser-content.tsx)
+  - [page.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/[locale]/submissions/page.tsx)
+- **Nguyên nhân bug**: `next-intl` trong chế độ Server Components / Client Hydration yêu cầu một mốc thời gian tĩnh làm tham số `now` khi định dạng thời gian tương đối (`relativeTime`). Nếu không được cung cấp, nó sẽ đưa ra cảnh báo console về việc fallback về thời gian hiện tại của client, có thể dẫn đến lỗi lệch Hydration (Hydration Mismatch).
+- **Giải pháp**:
+  - Import hook `useNow` từ `'next-intl'`.
+  - Khởi tạo giá trị tĩnh `const now = useNow();` bên trong Client Component.
+  - Truyền tham số `now` này vào hàm định dạng: `format.relativeTime(date, { now })`.
 
 ---
 
-## 🧪 3. Kết Quả Kiểm Thử Thực Tế (Verification Results)
+## 🧪 Kết Quả Xác Minh (Validation Results)
 
-Kịch bản kiểm thử tự động tại [test_resource_limits.js](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/test_resource_limits.js) đã chạy và cho kết quả **PASS tuyệt đối 100%**:
-
+### Chạy Kịch Bản Kiểm Thử Tự Động
+Mã lệnh chạy thực tế:
+```bash
+node test_new_programming_labs.js
 ```
-========================================================================
-🛡️  STARTING RESOURCE LIMITS & SANDBOX SECURITY VERIFICATION TEST...
-========================================================================
 
-👉 [TEST 1] Testing Out of Memory (OOM) Limit (RAM < 256MB)...
--> Kết quả OOM: SubmissionStatus=finished, ExecutionStatus=failed, ExitCode=137
-
-👉 [TEST 2] Testing CPU Limit & Infinite Loop Timeout...
--> Kết quả CPU: SubmissionStatus=finished, ExecutionStatus=timeout, ExitCode=124
-
-👉 [TEST 3] Testing Fork Bomb & PIDs Limit (Max 100 processes)...
--> Kết quả Fork Bomb: SubmissionStatus=finished, ExecutionStatus=finished
-
-========================================================================
-📊  REPORT: DOCKER CONTAINER RESOURCE LIMITS & SANDBOX STABILITY
-========================================================================
-[Ca 1] Out of Memory Limit (256MB)
-   - Kỳ vọng  : Failed/Killed (Exit Code 137)
-   - Thực tế  : Status=finished, ExitCode=137
-   - Trạng thái: PASS ✅
-   - Đánh giá : Container bị Docker dừng đột ngột để bảo vệ RAM hệ thống!
-------------------------------------------------------------------------
-[Ca 2] CPU & Loop Timeout Limit
-   - Kỳ vọng  : Killed cleanly on timeout
-   - Thực tế  : Status=finished, ExitCode=124
-   - Trạng thái: PASS ✅
-   - Đánh giá : Hệ thống tự động chấm dứt container chạy quá giờ!
-------------------------------------------------------------------------
-[Ca 3] Fork Bomb Prevention (PID Limit 100)
-   - Kỳ vọng  : Fork blocked / Resource unavailable
-   - Thực tế  : Starting controlled fork bomb... Fork blocked cleanly: [Errno 11] Resource temporarily unavailable  ...
-   - Trạng thái: PASS ✅
-   - Đánh giá : Docker chặn đứng sự sinh sôi vô hạn của các tiến trình con!
-------------------------------------------------------------------------
+### Kết quả xuất ra từ hệ thống:
+```
+🎉 SUCCESS: All 7 new labs successfully passed integration tests with 100/100 points!
 ```
 
 ---
 
-## 📁 4. Danh Sách Các Tệp Đã Tạo & Sửa Đổi
-
-| Module | Tên Tệp | Hành Động | Vai trò |
-|---|---|---|---|
-| **Backend** | [DockerRunner.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/services/DockerRunner.ts) | **[MODIFY]** | Bổ sung giới hạn swap, PIDs limit và vô hiệu hóa leo thang quyền. |
-| **Backend** | [InteractiveTerminalService.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/services/InteractiveTerminalService.ts) | **[MODIFY]** | Enforce RAM, Swap, CPU, PIDs limits cứng cho container tương tác của Standard Web Terminal. |
-| **Backend** | [test_resource_limits.js](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/test_resource_limits.js) | **[NEW]** | Kịch bản kiểm thử bảo mật & giới hạn sandbox tự động. |
-| **Document** | [Docker_Resource_Limits.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/Docker_Resource_Limits.md) | **[NEW]** | Tài liệu đặc tả kỹ thuật thiết lập giới hạn tài nguyên Docker của nền tảng. |
-| **Document** | [PROS_CONS_LAB_SOLUTIONS.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/PROS_CONS_LAB_SOLUTIONS.md) | **[NEW]** | Tài liệu phân tích ưu nhược điểm các giải pháp thực thi. |
-| **Document** | [PROJECT_FLOW.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/PROJECT_FLOW.md) | **[MODIFY]** | Đăng ký dấu ấn hoạt động Phiên 15 vào lịch trình tổng thể. |
-| **Artifact** | [walkthrough.md](file:///C:/Users/xuanv/.gemini/antigravity-ide/brain/d14755e4-becf-4904-929a-b8a67200bfac/walkthrough.md) | **[MODIFY]** | Tài liệu báo cáo (file này). |
+## 📂 6. Đồng Bộ Hóa Tài Liệu Workspace Vật Lý
+Theo đúng quy tắc của dự án, hai tệp Artifact động đã được đồng bộ vào thư mục vật lý tương ứng:
+- `task.md` -> [Document/07_Scratchpads/task.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/07_Scratchpads/task.md)
+- `walkthrough.md` -> [Document/05_Walkthroughs_Reports/walkthrough.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/05_Walkthroughs_Reports/walkthrough.md)
+- Phân tích thiết kế giải thuật -> [Khao_sat_va_Thiet_ke_Lab_Lap_Trinh.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/08_Lab_Data/Khao_sat_va_Thiet_ke_Lab_Lap_Trinh.md)
+- Lịch sử tiến độ dự án -> [PROJECT_FLOW.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/PROJECT_FLOW.md)

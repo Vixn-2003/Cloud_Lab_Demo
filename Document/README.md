@@ -41,6 +41,7 @@ Document/
 ### 📐 2. Kiến Trúc & Đặc Tả Thiết Kế (`02_Architecture_Design`)
 *   **[SOLUTIONS_FLOW.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/SOLUTIONS_FLOW.md)**: Sơ đồ tuần tự (Sequence Diagrams) mô tả luồng dữ liệu của 4 Giải pháp cốt lõi (Monaco, Web Terminal, Labtainer Online, Labtainer ZIP).
 *   **[PROS_CONS_LAB_SOLUTIONS.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/PROS_CONS_LAB_SOLUTIONS.md)**: Bảng phân tích chi tiết Ưu và Nhược điểm của các giải pháp thực thi, kèm theo định hướng vận hành thương mại.
+*   **[DATABASE_CHOICE_EXPLANATION.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/DATABASE_CHOICE_EXPLANATION.md)**: Giải trình kiến trúc và lý do sử dụng song song SQLite cho local/demo và định hướng MySQL/Postgres cho production & lab sandbox.
 *   **[Docker_Resource_Limits.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/Docker_Resource_Limits.md)**: Đặc tả cấu hình bảo mật Sandbox (RAM/CPU/PIDs limit) phòng chống mã độc và **Fork Bomb**.
 *   **[CLOUD_LAB_MY_LABS_UI_UPGRADE_SPEC.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/CLOUD_LAB_MY_LABS_UI_UPGRADE_SPEC.md)**: Tài liệu đặc tả nâng cấp giao diện "Bài Lab của tôi" và Sidebar học trình.
 *   **[VERCEL_AI_FRONTEND_SPEC.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/VERCEL_AI_FRONTEND_SPEC.md)**: Tiêu chuẩn thiết kế giao diện cao cấp (Enterprise Spec) cho Vercel AI sinh mã nguồn React V2.
@@ -74,6 +75,7 @@ Document/
 ---
 
 ### 👥 6. Hướng Dẫn Nội Bộ Thành Viên Mới (`06_Onboarding_Team`)
+*   **[DEVELOPER_SETUP_GUIDE.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/06_Onboarding_Team/DEVELOPER_SETUP_GUIDE.md)**: Hướng dẫn chi tiết các bước thiết lập môi trường phát triển cục bộ dành cho nhà phát triển mới (Docker, Node.js, Next.js, SQLite, test runners).
 *   **[ONBOARDING_SECURITY_MEMBER.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/06_Onboarding_Team/ONBOARDING_SECURITY_MEMBER.md)**: Hướng dẫn onboarding cho thành viên An toàn thông tin mới tham gia dự án, bao gồm cấu trúc thư mục, quy trình làm việc và reference solutions.
 
 ---

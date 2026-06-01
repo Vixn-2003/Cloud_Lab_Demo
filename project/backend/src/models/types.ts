@@ -46,6 +46,10 @@ export interface LabConfig {
   environmentType: "single_runtime" | "single_machine" | "multi_node";
   toolset?: string[];
   statement: string;
+  examples?: {
+    input: string;
+    output: string;
+  }[];
   testcases: {
     input: string;
     expectedOutput: string;

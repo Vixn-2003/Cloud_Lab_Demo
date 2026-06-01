@@ -1,0 +1,258 @@
+{
+  "version": "1.0",
+  "language": "vi",
+  "generatedFrom": "uploaded_screenshots",
+  "extractionWarnings": [
+    "Bài 'CON SỐ DUYÊN NỢ' trong ảnh mô tả input là nhiều dòng, nhưng ví dụ có dòng đầu là số lượng test. JSON đang chuẩn hóa theo ví dụ: dòng đầu là T.",
+    "Bài 'TÍNH TOÁN LƯỢNG MƯA' bị cắt mất một phần sample input trong ảnh, nên example.sampleInputVisible chỉ lưu phần nhìn thấy được. Output vẫn được lưu đúng theo ảnh."
+  ],
+  "problems": [
+    {
+      "id": "max_triple",
+      "slug": "max-triple",
+      "title": "MAX TRIPLE",
+      "timeLimitSeconds": 2,
+      "memoryLimitKb": 65536,
+      "statement": "Cho mảng A[] gồm N số nguyên. Nhiệm vụ của bạn là tìm tổng lớn nhất của bộ ba số trong mảng. Chú ý nếu sử dụng kỹ thuật sắp xếp, submit lời giải của bạn sẽ bị fail. Ví dụ A[] = {1, 2, 3, 4, 5}, ta nhận được tổng lớn nhất của bộ ba số là 3 + 4 + 5 = 12.",
+      "inputDescription": [
+        "Dòng đầu tiên đưa vào T là số lượng bộ test.",
+        "Những dòng tiếp theo, mỗi dòng đưa vào một test. Mỗi test gồm hai dòng: dòng đầu tiên đưa vào N là số lượng phần tử của mảng A[]; dòng tiếp theo đưa vào các phần tử A[i] của mảng A[]."
+      ],
+      "outputDescription": [
+        "Đưa ra kết quả mỗi test theo từng dòng."
+      ],
+      "constraints": [
+        "1 <= T <= 100",
+        "1 <= N <= 10^6",
+        "-10^8 <= A[i] <= 10^8"
+      ],
+      "examples": [
+        {
+          "input": "2\n7\n1 2 3 0 -1 8 10\n7\n9 8 20 3 4 -1 0",
+          "output": "21\n37"
+        }
+      ],
+      "tags": [
+        "array",
+        "linear-scan",
+        "maximum"
+      ],
+      "sourceImages": [
+        "641c8fc3-c0c9-4b71-a0a0-f8212b98a919.png"
+      ]
+    },
+    {
+      "id": "xoay_mang",
+      "slug": "xoay-mang",
+      "title": "XOAY MẢNG",
+      "timeLimitSeconds": 2,
+      "memoryLimitKb": 65536,
+      "statement": "Cho mảng A[] gồm N số nguyên và số tự nhiên d. Hãy thực hiện quay mảng A[] với d phần tử từ phải qua trái. Ví dụ A[] = {1, 2, 3, 4, 5}, d = 2 ta nhận được mảng A[] = {3, 4, 5, 1, 2}.",
+      "inputDescription": [
+        "Dòng đầu tiên đưa vào T là số lượng bộ test.",
+        "Những dòng tiếp theo, mỗi dòng đưa vào một test. Mỗi test là gồm hai dòng: dòng đầu tiên đưa vào N là số lượng phần tử của mảng A[] và số d; dòng tiếp theo đưa vào các phần tử A[i] của mảng A[]."
+      ],
+      "outputDescription": [
+        "Đưa ra kết quả mỗi test theo từng dòng."
+      ],
+      "constraints": [
+        "1 <= T <= 100",
+        "1 <= d <= N <= 10^7",
+        "0 <= A[i] <= 10^9"
+      ],
+      "examples": [
+        {
+          "input": "2\n5 2\n1 2 3 4 5\n10 3\n2 4 6 8 10 12 14 16 18 20",
+          "output": "3 4 5 1 2\n8 10 12 14 16 18 20 2 4 6"
+        }
+      ],
+      "tags": [
+        "array",
+        "rotation"
+      ],
+      "sourceImages": [
+        "d708269f-f083-44fd-8e16-d1a74cbae028.png"
+      ]
+    },
+    {
+      "id": "con_so_duyen_no",
+      "slug": "con-so-duyen-no",
+      "title": "CON SỐ DUYÊN NỢ",
+      "timeLimitSeconds": 2,
+      "memoryLimitKb": 65536,
+      "statement": "Con số duyên nợ là con số có chữ số đầu và chữ số cuối giống nhau. Viết chương trình kiểm tra xem một số nguyên dương n ghi trong hệ thập phân có chữ số đầu và chữ số cuối giống nhau không?",
+      "inputDescription": [
+        "Dòng đầu tiên ghi số lượng test T.",
+        "T dòng tiếp theo, mỗi dòng chứa một số nguyên dương n ghi ở hệ thập phân."
+      ],
+      "outputDescription": [
+        "Ứng với mỗi số nguyên dương n, ghi ra trên một dòng là YES nếu số tương ứng có chữ số đầu và chữ số cuối giống nhau, NO nếu ngược lại."
+      ],
+      "constraints": [
+        "1 <= n < 10^100"
+      ],
+      "examples": [
+        {
+          "input": "2\n12345\n123451",
+          "output": "NO\nYES"
+        }
+      ],
+      "tags": [
+        "string",
+        "number-theory"
+      ],
+      "extractionNotes": [
+        "Ảnh gốc ghi input là nhiều dòng, nhưng ví dụ có dòng đầu là 2 và chỉ có 2 dòng output, nên JSON chuẩn hóa dòng đầu là T."
+      ],
+      "sourceImages": [
+        "84135f47-757c-42b2-98a9-d99651f7dcdb.png"
+      ]
+    },
+    {
+      "id": "lai_suat_ngan_hang",
+      "slug": "lai-suat-ngan-hang",
+      "title": "LÃI SUẤT NGÂN HÀNG",
+      "timeLimitSeconds": 2,
+      "memoryLimitKb": 65536,
+      "statement": "Ngân hàng thông báo lãi suất là X % mỗi năm. Với số tiền gửi vào là N. Sau mỗi năm, tiền lãi sẽ được cộng dồn. Hỏi sau bao nhiêu năm thì số tiền đạt được ít nhất là M.",
+      "inputDescription": [
+        "Dòng đầu ghi số bộ test.",
+        "Mỗi test viết 3 số thực kiểu double N, X và M."
+      ],
+      "outputDescription": [
+        "Ghi ra số năm tính được."
+      ],
+      "constraints": [
+        "0 < N < M < 100000"
+      ],
+      "examples": [
+        {
+          "input": "2\n200.00 6.5 300\n500 4 1000.00",
+          "output": "7\n18"
+        }
+      ],
+      "tags": [
+        "math",
+        "compound-interest",
+        "simulation"
+      ],
+      "sourceImages": [
+        "6b848473-832f-4016-8488-61d0e46dbf86.png"
+      ]
+    },
+    {
+      "id": "day_so_hamming",
+      "slug": "day-so-hamming",
+      "title": "DÃY SỐ HAMMING",
+      "timeLimitSeconds": 2,
+      "memoryLimitKb": 65536,
+      "statement": "Dãy số nguyên dương tăng dần trong đó ước số nguyên tố lớn nhất của các số trong dãy đều không vượt quá 5 được gọi là dãy số Hamming. Ví dụ 10 = 2x5 thuộc dãy Hamming còn 26 = 2x13 không thuộc dãy Hamming. Số 1 được coi là số đầu tiên của dãy Hamming. Cho số nguyên dương N. Hãy xác định xem N có thuộc dãy Hamming hay không và nếu có thì thứ tự của N trong dãy Hamming là bao nhiêu.",
+      "inputDescription": [
+        "Dòng đầu tiên ghi số bộ test, không quá 10^5.",
+        "Mỗi test ghi một số N."
+      ],
+      "outputDescription": [
+        "Nếu giá trị N thuộc dãy Hamming thì ghi ra thứ tự của N, tính từ 1.",
+        "Nếu không thì ghi ra Not in sequence."
+      ],
+      "constraints": [
+        "1 <= N <= 10^18"
+      ],
+      "examples": [
+        {
+          "input": "11\n1\n2\n6\n7\n8\n9\n10\n11\n12\n13\n14",
+          "output": "1\n2\n6\nNot in sequence\n7\n8\n9\nNot in sequence\n10\nNot in sequence\nNot in sequence"
+        }
+      ],
+      "tags": [
+        "math",
+        "hamming-number",
+        "precomputation",
+        "binary-search"
+      ],
+      "sourceImages": [
+        "9c6d1ea1-d809-4ba6-88b4-697dc64aa7f9.png"
+      ]
+    },
+    {
+      "id": "liet_ke_cap_so_nguyen_to_cung_nhau",
+      "slug": "liet-ke-cap-so-nguyen-to-cung-nhau",
+      "title": "LIỆT KÊ CẶP SỐ NGUYÊN TỐ CÙNG NHAU",
+      "timeLimitSeconds": 2,
+      "memoryLimitKb": 65536,
+      "statement": "Cho dãy số A[] có n phần tử là các số nguyên dương khác nhau, giá trị không quá 100. Hãy liệt kê các cặp số nguyên tố cùng nhau xuất hiện trong dãy theo thứ tự tăng dần, mỗi cặp số in trên một dòng. Một cặp số được gọi là nguyên tố cùng nhau nếu ước chung lớn nhất của chúng bằng 1.",
+      "inputDescription": [
+        "Dòng đầu ghi số n, không quá 100.",
+        "Dòng thứ 2 ghi n số của dãy A[]."
+      ],
+      "outputDescription": [
+        "Ghi lần lượt các cặp số nguyên tố cùng nhau theo thứ tự tăng dần."
+      ],
+      "constraints": [
+        "n <= 100",
+        "Các phần tử của A[] là số nguyên dương khác nhau",
+        "A[i] <= 100"
+      ],
+      "examples": [
+        {
+          "input": "5\n3 7 9 6 13",
+          "output": "3 7\n3 13\n6 7\n6 13\n7 9\n7 13\n9 13"
+        }
+      ],
+      "tags": [
+        "gcd",
+        "sorting",
+        "number-theory"
+      ],
+      "sourceImages": [
+        "cb227f8d-ea82-4974-bd41-7e3a038d74f5.png"
+      ]
+    },
+    {
+      "id": "tinh_toan_luong_mua",
+      "slug": "tinh-toan-luong-mua",
+      "title": "TÍNH TOÁN LƯỢNG MƯA",
+      "timeLimitSeconds": 2,
+      "memoryLimitKb": 65536,
+      "statement": "Trong một ngày mưa nhiều, các trạm đo mưa hoạt động hết công suất. Tại mỗi trạm đo, các cơn mưa được ghi nhận thời điểm bắt đầu, thời điểm kết thúc và lượng mưa đo được. Một trạm mưa có thể có nhiều lần trong ngày. Hãy tính lượng mưa trung bình trong 1 giờ (60 phút) của từng trạm theo đúng thứ tự trong danh sách ban đầu. Chú ý để tính lượng mưa trung bình thì cần tính tất cả lần đo mưa tại trạm đó.",
+      "inputDescription": [
+        "Dòng đầu ghi số lượt đo lượng mưa.",
+        "Thông tin về một lần đo lượng mưa gồm 4 dòng: tên trạm, thời điểm bắt đầu mưa (hh:mm), thời điểm kết thúc mưa (hh:mm), lượng mưa đo được.",
+        "Số trạm đo khác nhau nhỏ hơn 10."
+      ],
+      "outputDescription": [
+        "Ghi ra danh sách các trạm khác nhau trong danh sách đo mưa và lượng mưa trung bình của từng trạm.",
+        "Thông tin trên mỗi dòng lần lượt gồm: mã trạm đo tính từ T01, tên trạm đo mưa, lượng mưa trung bình trong 1 giờ tại mỗi trạm, tính chính xác đến 2 số phần thập phân.",
+        "Các thông tin ghi cách nhau một khoảng trống."
+      ],
+      "constraints": [
+        "Số trạm đo khác nhau < 10",
+        "Thời gian có định dạng hh:mm",
+        "Lượng mưa là số đo được trong một lần ghi nhận"
+      ],
+      "examples": [
+        {
+          "inputVisibleFromImage": "10\nDong Anh\n07:30\n08:00\n60\nCau Giay\n07:45\n08:12\n50\nSoc Son\n08:00\n09:15\n78",
+          "inputComplete": null,
+          "output": "T01 Dong Anh 59.22\nT02 Cau Giay 80.70\nT03 Soc Son 57.60",
+          "isInputTruncatedInImage": true
+        }
+      ],
+      "tags": [
+        "map",
+        "aggregation",
+        "time-processing",
+        "formatting"
+      ],
+      "extractionNotes": [
+        "Ảnh chỉ hiển thị phần đầu của sample input. Vì dòng đầu là 10 nên sample đầy đủ phải có 10 lượt đo, nhưng ảnh hiện tại chỉ nhìn thấy 3 lượt đo đầu tiên."
+      ],
+      "sourceImages": [
+        "a1706718-785b-4d44-a3f9-e315b435fa68.png",
+        "3ce55fed-0447-4262-9355-96f74a71ab92.png",
+        "40d483d6-347e-4f03-acef-aa6e064647c3.png",
+        "a73ecfce-d67c-4c7b-bcc8-edcdfbbb6e6b.png"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "input": "2\n7\n1 2 3 0 -1 8 10\n7\n9 8 20 3 4 -1 0",
+    "expectedOutput": "21\n37"
+  },
+  {
+    "input": "1\n5\n-10 -20 -30 -5 -12",
+    "expectedOutput": "-27"
+  },
+  {
+    "input": "1\n3\n10 10 10",
+    "expectedOutput": "30"
+  }
+]

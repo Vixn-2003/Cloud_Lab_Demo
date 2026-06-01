@@ -1,0 +1,14 @@
+[
+  {
+    "input": "2\n12345\n123451",
+    "expectedOutput": "NO\nYES"
+  },
+  {
+    "input": "3\n7\n88\n909",
+    "expectedOutput": "YES\nYES\nYES"
+  },
+  {
+    "input": "2\n1234567890123456789012345678901\n1234567890123456789012345678902",
+    "expectedOutput": "YES\nNO"
+  }
+]

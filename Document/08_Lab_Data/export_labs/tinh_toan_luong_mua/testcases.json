@@ -1,0 +1,10 @@
+[
+  {
+    "input": "3\nDong Anh\n07:30\n08:00\n60\nCau Giay\n07:45\n08:12\n50\nSoc Son\n08:00\n09:15\n78",
+    "expectedOutput": "T01 Dong Anh 120.00\nT02 Cau Giay 111.11\nT03 Soc Son 62.40"
+  },
+  {
+    "input": "4\nDong Anh\n06:00\n07:00\n45\nCau Giay\n07:00\n08:30\n120\nDong Anh\n08:00\n09:30\n90\nCau Giay\n09:00\n10:00\n60",
+    "expectedOutput": "T01 Dong Anh 54.00\nT02 Cau Giay 72.00"
+  }
+]

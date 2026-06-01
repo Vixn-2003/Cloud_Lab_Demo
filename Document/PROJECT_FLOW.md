@@ -245,6 +245,23 @@ CREATE TABLE submissions (
 - [x] **Biên soạn tài liệu kỹ thuật**: Viết `Document/Docker_Resource_Limits.md` mô tả kiến trúc sandbox bảo vệ máy chủ host.
 - [x] **Lưu trữ tài liệu phân tích ưu nhược điểm**: Viết `Document/PROS_CONS_LAB_SOLUTIONS.md` tổng hợp và đặc tả ưu/nhược điểm các giải pháp thực thi.
 
+### Phiên 16 — Xây dựng & Kiểm thử 7 Bài toán Lập trình Mới (Algorithmic Labs Integration)
+- [x] **Đăng ký 7 bài lab mới**: Khảo sát và tích hợp 7 bài toán lập trình từ `bai_toan_lap_trinh.json` vào bộ môn *Cấu trúc dữ liệu & Giải thuật* thuộc *Khoa Công nghệ Phần mềm* dùng môi trường `python_basic`.
+- [x] **Thiết kế giải thuật tối ưu**: Thiết kế các thuật toán $O(N)$ quét tuyến tính không sort cho *MAX TRIPLE*, sinh trước dãy Hamming và tìm kiếm nhị phân $O(\log K)$ cho *Dãy số Hamming*, giúp giảm thiểu tối đa tài nguyên RAM/CPU và thời gian xử lý.
+- [x] **Xây dựng Testcase phong phú**: Bổ sung bộ testcases biên giới hạn và tự động kiểm chứng tính đúng đắn toán học.
+- [x] **Phát triển script kiểm thử tự động (`test_new_programming_labs.js`)**: Thực thi nộp bài tự động qua HTTP API thực tế, đạt điểm tuyệt đối **100/100 PASS ✅** cho cả 7 bài lab.
+- [x] **Sửa lỗi Console Output khi Chạy thử (Run Code)**: Giải quyết triệt để lỗi đua luồng (race condition) trên Socket.IO khiến các tiến trình chạy thử siêu nhanh bị mất log stream bằng cách trích xuất trực tiếp `stdout`/`stderr` từ gói payload của sự kiện status hoàn thành.
+- [x] **Sửa lỗi hiển thị đuôi file ở Workspace Editor**: Sửa lỗi endpoint `/profiles/:id` của Backend bị thiếu trường `extension`, khiến các bài lab Python hiển thị tiêu đề file là `Main.sh` thay vì `Main.py` trên giao diện soạn thảo.
+- [x] **Tách biệt Ví dụ mẫu & Bộ testcases**: Khảo sát và tách biệt rõ rành rọt dữ liệu ví dụ (Examples) và bộ test ẩn (Testcases) của bài lab, tích hợp khu vực hiển thị Ví dụ mẫu cực kỳ trực quan trên Workspace kèm nút "Dùng làm Custom Input" giúp tự động điền nhanh dữ liệu vào ô Test Input để sinh viên chạy thử.
+- [x] **Viết tài liệu khảo sát giải thuật**: Tạo mới tệp tài liệu `Document/08_Lab_Data/Khao_sat_va_Thiet_ke_Lab_Lap_Trinh.md` mô tả thiết kế kỹ thuật tối ưu.
+- [x] **Sửa lỗi cảnh báo ENVIRONMENT_FALLBACK của next-intl**: Tích hợp hook `useNow` vào các component `LabBrowserContent` và `AttemptsPageContent`, truyền tham số `now` vào hàm `format.relativeTime(date, { now })` để đảm bảo an toàn đồng bộ thời gian render (hydration safety) và loại bỏ hoàn toàn cảnh báo console.
+
+### Phiên 17 — Hướng Dẫn Thiết Lập Môi Trường Nhà Phát Triển Mới (Developer Setup Spec)
+- [x] **Biên soạn tài liệu Setup chi tiết**: Tạo mới tệp [DEVELOPER_SETUP_GUIDE.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/06_Onboarding_Team/DEVELOPER_SETUP_GUIDE.md) hướng dẫn toàn diện cấu hình môi trường phát triển cục bộ.
+- [x] **Cấu hình mạng isolated**: Hướng dẫn nhà phát triển cách tạo mạng Docker `isolated` bằng CLI để đáp ứng tính năng bảo mật định tuyến mạng trong container.
+- [x] **Giải trình kiến trúc cơ sở dữ liệu**: Tạo mới tệp đặc tả [DATABASE_CHOICE_EXPLANATION.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/DATABASE_CHOICE_EXPLANATION.md) làm rõ vai trò của SQLite (Platform Dev) và MySQL/Postgres (Production & Student Labs).
+- [x] **Đăng ký tài liệu Setup**: Đăng ký và liên kết tệp hướng dẫn thiết lập mới vào danh mục [Document/README.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/README.md).
+
 ## 🚧 Backlog / Việc tiếp theo (Giai đoạn 4 & 5)
 
 ### Giai đoạn 4: Hoàn thiện tính năng lõi

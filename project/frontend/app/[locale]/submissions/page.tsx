@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations, useFormatter } from 'next-intl';
+import { useTranslations, useFormatter, useNow } from 'next-intl';
 import { Link } from '@/src/i18n/navigation';
 import {
   Search,
@@ -64,6 +64,7 @@ function AttemptsPageContent() {
   const tStatus = useTranslations('status');
   const tCommon = useTranslations('common');
   const format = useFormatter();
+  const now = useNow();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [activeTab, setActiveTab] = useState<FilterTab>(
@@ -151,7 +152,7 @@ function AttemptsPageContent() {
 
   function formatTimeAgo(dateString: string) {
     const date = new Date(dateString);
-    return format.relativeTime(date);
+    return format.relativeTime(date, { now });
   }
 
   function getAttemptCTA(attempt: Attempt) {
