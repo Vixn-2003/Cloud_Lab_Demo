@@ -258,7 +258,9 @@ CREATE TABLE submissions (
 
 ### Phiên 17 — Hướng Dẫn Thiết Lập Môi Trường Nhà Phát Triển Mới (Developer Setup Spec)
 - [x] **Biên soạn tài liệu Setup chi tiết**: Tạo mới tệp [DEVELOPER_SETUP_GUIDE.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/06_Onboarding_Team/DEVELOPER_SETUP_GUIDE.md) hướng dẫn toàn diện cấu hình môi trường phát triển cục bộ.
+- [x] **Hướng dẫn chi tiết cài đặt Node.js**: Cập nhật mục Prerequisites trong tệp đặc tả, mô tả chi tiết 3 phương pháp tải và cài đặt Node.js (tải trực tiếp LTS từ Website, cài đặt qua Node Version Manager `nvm`, hoặc cài bằng Command Line `winget`/`brew`/`apt`) và các lệnh kiểm thử phiên bản `node -v` / `npm -v`.
 - [x] **Cấu hình mạng isolated**: Hướng dẫn nhà phát triển cách tạo mạng Docker `isolated` bằng CLI để đáp ứng tính năng bảo mật định tuyến mạng trong container.
+- [x] **Tự động hóa pipeline dựng Docker Images**: Xây dựng kịch bản tự động hóa [build_images.sh](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/docker/build_images.sh) và [build_images.ps1](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/docker/build_images.ps1) giúp tự động pull 5 base images và tự build image `malware-env:latest` cục bộ chỉ trong 1 click.
 - [x] **Giải trình kiến trúc cơ sở dữ liệu**: Tạo mới tệp đặc tả [DATABASE_CHOICE_EXPLANATION.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/DATABASE_CHOICE_EXPLANATION.md) làm rõ vai trò của SQLite (Platform Dev) và MySQL/Postgres (Production & Student Labs).
 - [x] **Đăng ký tài liệu Setup**: Đăng ký và liên kết tệp hướng dẫn thiết lập mới vào danh mục [Document/README.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/README.md).
 

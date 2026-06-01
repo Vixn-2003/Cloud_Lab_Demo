@@ -9,7 +9,62 @@
 
 Trước khi bắt đầu, máy tính phát triển của bạn cần cài đặt các công cụ sau:
 
-*   **Node.js**: Phiên bản `>= 20` (Khuyên dùng bản LTS).
+*   **Node.js**: Phiên bản `>= 20` (Khuyên dùng bản LTS).  
+    *Xem hướng dẫn chi tiết cách tải và cài đặt Node.js ở mục bên dưới:*
+    
+    #### 📦 Hướng Dẫn Tải & Cài Đặt Node.js (Cho Lập Trình Viên Mới)
+    
+    ##### Cách 1: Tải trực tiếp từ Website chính chủ (Đơn giản nhất)
+    1.  Truy cập trang chủ chính thức: **[nodejs.org](https://nodejs.org/)**
+    2.  Tải bản **LTS (Long Term Support)** (ví dụ: `v20.x.x` hoặc `v22.x.x`). Bản LTS là bản hỗ trợ dài hạn, chạy cực kỳ ổn định và tương thích 100% với các package Node.js trong dự án.
+    3.  Chạy tệp cài đặt vừa tải về (định dạng `.msi` cho Windows, `.pkg` cho macOS):
+        *   Nhấn **Next** xuyên suốt quá trình cài đặt.
+        *   *Lưu ý*: Hãy tích chọn ô **"Automatically install the necessary tools..."** nếu được hỏi để Node tự động cấu hình các công cụ build C++ (cần cho thư viện `node-pty`).
+    
+    ##### Cách 2: Sử Dụng Node Version Manager (nvm) — 🌟 KHUYÊN DÙNG CHO DEVELOPERS
+    Công cụ `nvm` giúp bạn dễ dàng cài đặt, quản lý và chuyển đổi qua lại giữa nhiều phiên bản Node.js trên cùng một máy tính mà không bị xung đột.
+    *   **Trên Windows**:
+        1. Tải bộ cài `nvm-setup.exe` phiên bản mới nhất tại: **[nvm-windows Releases](https://github.com/coreybutler/nvm-windows/releases)**
+        2. Mở file và tiến hành cài đặt bình thường.
+        3. Mở PowerShell hoặc CMD mới và chạy các lệnh:
+           ```powershell
+           nvm install 20.11.0   # Cài đặt phiên bản Node.js 20
+           nvm use 20.11.0       # Kích hoạt sử dụng phiên bản 20
+           ```
+    *   **Trên macOS / Linux**:
+        1. Cài đặt nvm qua terminal:
+           ```bash
+           curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+           ```
+        2. Khởi động lại terminal và chạy:
+           ```bash
+           nvm install 20
+           nvm use 20
+           ```
+    
+    ##### Cách 3: Tải bằng Trình quản lý gói (Command Line)
+    *   **Windows (PowerShell)**:
+        ```powershell
+        winget install OpenJS.NodeJS.LTS
+        ```
+    *   **macOS (Homebrew)**:
+        ```bash
+        brew install node@20
+        ```
+    *   **Linux (Ubuntu/Debian)**:
+        ```bash
+        sudo apt update
+        sudo apt install nodejs npm -y
+        ```
+    
+    ##### ✅ Xác minh cài đặt thành công:
+    Sau khi cài đặt xong, hãy mở cửa sổ dòng lệnh (Terminal/PowerShell) và gõ lệnh sau để kiểm tra:
+    ```bash
+    node -v
+    npm -v
+    ```
+    *   Nếu màn hình in ra phiên bản dạng `v20.x.x` và `10.x.x` là bạn đã cài đặt thành công và sẵn sàng chạy dự án!
+
 *   **Docker Desktop**: Đã cài đặt, đang chạy ổn định.
 *   **Git**: Dùng để quản lý mã nguồn.
 *   **Hệ điều hành**:
@@ -99,23 +154,31 @@ a1b2c3d4e5f6   bridge     bridge    local
 
 ---
 
-### Bước 4: Xây Dựng & Tải Các Docker Image Cho Bài Lab
-Các bài lab của sinh viên chạy cô lập trong sandbox. Nhà phát triển mới cần chuẩn bị sẵn các Docker Image tương ứng:
+### Bước 4: Xây Dựng & Tải Các Docker Image Cho Bài Lab (Tự Động 1 Click)
+Các bài lab của sinh viên chạy cô lập trong sandbox. Để tiện lợi cho nhà phát triển mới, hệ thống đã cung cấp sẵn **Kịch bản tự động hóa 1-click** giúp tự động pull toàn bộ 5 base images và tự build image `malware-env:latest` cục bộ chỉ trong một lần chạy:
 
-1.  **Build image cho bài Lab Phân tích Mã độc (`malware-env`)**:
-    ```bash
-    cd project/backend/docker
-    docker build -t malware-env:latest -f Dockerfile.malware .
-    ```
-2.  **Pull các image nền tảng cho Monaco Code Runner (Tối ưu hóa)**:  
-    Docker sẽ tự động pull các image này khi sinh viên bấm nộp bài lần đầu, nhưng bạn nên pull trước để kiểm thử nhanh chóng:
-    ```bash
-    docker pull python:3.11-slim
-    docker pull node:20-slim
-    docker pull gcc:13
-    docker pull openjdk:17-slim
-    docker pull ubuntu:22.04
-    ```
+#### Cách 1: Chạy trên Windows (PowerShell)
+Mở PowerShell tại thư mục dự án và chạy:
+```powershell
+cd project/backend/docker
+# Cho phép chạy script nếu bị giới hạn
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+./build_images.ps1
+```
+
+#### Cách 2: Chạy trên Linux / macOS / Git Bash (Bash Shell)
+Mở Terminal tại thư mục dự án và chạy:
+```bash
+cd project/backend/docker
+chmod +x build_images.sh
+./build_images.sh
+```
+
+---
+
+#### 💡 Nội dung kịch bản tự động hóa thực hiện:
+1.  **Pull 5 Base Images** cho Monaco Code Runner: `python:3.11-slim`, `node:20-slim`, `gcc:13`, `openjdk:17-slim`, `ubuntu:22.04`.
+2.  **Tự động build** image `malware-env:latest` từ `Dockerfile.malware` trong thư mục cục bộ.
 
 ---
 
