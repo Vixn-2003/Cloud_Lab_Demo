@@ -7,6 +7,7 @@ import { routing } from '@/src/i18n/routing';
 
 import { AuthGuard } from '@/components/auth-guard';
 import { LayoutContent } from '@/components/layout-content';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -45,25 +46,32 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${inter.variable} ${jetbrainsMono.variable} dark bg-background`}>
+    <html lang={locale} className={`${inter.variable} ${jetbrainsMono.variable} bg-background`} suppressHydrationWarning>
       <body className="font-sans antialiased min-h-screen">
         <NextIntlClientProvider messages={messages}>
-          <AuthGuard>
-            <LayoutContent>
-              {children}
-            </LayoutContent>
-          </AuthGuard>
-          <Toaster 
-            theme="dark" 
-            position="bottom-right"
-            toastOptions={{
-              style: {
-                background: 'oklch(0.16 0.005 285)',
-                border: '1px solid oklch(0.28 0.01 285)',
-                color: 'oklch(0.95 0 0)',
-              },
-            }}
-          />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthGuard>
+              <LayoutContent>
+                {children}
+              </LayoutContent>
+            </AuthGuard>
+            <Toaster 
+              theme="dark" 
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: 'oklch(0.16 0.005 285)',
+                  border: '1px solid oklch(0.28 0.01 285)',
+                  color: 'oklch(0.95 0 0)',
+                },
+              }}
+            />
+          </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

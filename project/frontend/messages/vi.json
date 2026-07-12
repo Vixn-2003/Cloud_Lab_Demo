@@ -317,7 +317,8 @@
     "copyCode": "Sao chép code",
     "copied": "Đã sao chép!",
     "language": "Ngôn ngữ",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "theme": "Giao diện"
   },
   "auth": {
     "loginTitle": "Đăng nhập hệ thống",

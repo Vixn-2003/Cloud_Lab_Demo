@@ -5,11 +5,85 @@
 
 /* Cloud Lab Premium Dark Theme - Inspired by Vercel/Linear/GitHub */
 :root {
-  /* Force dark mode by default */
-  color-scheme: dark;
+  color-scheme: light;
+  
+  /* Background layers */
+  --background: oklch(0.98 0.003 285);
+  --foreground: oklch(0.13 0.01 285);
+  
+  /* Card/panel surfaces */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0.01 285);
+  
+  /* Popover */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0.01 285);
+  
+  /* Primary - Blue accent */
+  --primary: oklch(0.55 0.2 250);
+  --primary-foreground: oklch(0.98 0 0);
+  
+  /* Secondary - Subtle surfaces */
+  --secondary: oklch(0.94 0.003 285);
+  --secondary-foreground: oklch(0.13 0.01 285);
+  
+  /* Muted - Disabled/tertiary */
+  --muted: oklch(0.94 0.003 285);
+  --muted-foreground: oklch(0.45 0.01 285);
+  
+  /* Accent - Interactive hover */
+  --accent: oklch(0.91 0.008 285);
+  --accent-foreground: oklch(0.13 0.01 285);
+  
+  /* Destructive - Error states */
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  
+  /* Borders */
+  --border: oklch(0.88 0.008 285);
+  --input: oklch(0.88 0.008 285);
+  --ring: oklch(0.55 0.2 250);
+  
+  /* Semantic colors */
+  --success: oklch(0.55 0.18 145);
+  --success-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.68 0.16 85);
+  --warning-foreground: oklch(0.15 0 0);
+  --info: oklch(0.6 0.14 200);
+  --info-foreground: oklch(0.98 0 0);
+  
+  /* Brand accents */
+  --accent-blue: oklch(0.55 0.2 250);
+  --accent-purple: oklch(0.55 0.2 290);
+  --accent-green: oklch(0.55 0.18 145);
+  --accent-red: oklch(0.55 0.22 25);
+  --accent-amber: oklch(0.68 0.16 85);
+  --accent-cyan: oklch(0.6 0.14 200);
+  
+  /* Chart colors */
+  --chart-1: oklch(0.55 0.2 250);
+  --chart-2: oklch(0.55 0.18 145);
+  --chart-3: oklch(0.55 0.2 290);
+  --chart-4: oklch(0.68 0.16 85);
+  --chart-5: oklch(0.6 0.14 200);
+  
+  /* Radius */
+  --radius: 0.5rem;
+  
+  /* Sidebar - Light */
+  --sidebar: oklch(0.96 0.004 285);
+  --sidebar-foreground: oklch(0.2 0.01 285);
+  --sidebar-primary: oklch(0.55 0.2 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.91 0.008 285);
+  --sidebar-accent-foreground: oklch(0.2 0.01 285);
+  --sidebar-border: oklch(0.88 0.008 285);
+  --sidebar-ring: oklch(0.55 0.2 250);
 }
 
-.dark, :root {
+.dark {
+  color-scheme: dark;
+  
   /* Background layers */
   --background: oklch(0.13 0.005 285);
   --foreground: oklch(0.95 0 0);
@@ -69,9 +143,6 @@
   --chart-3: oklch(0.6 0.22 290);
   --chart-4: oklch(0.75 0.18 85);
   --chart-5: oklch(0.7 0.15 200);
-  
-  /* Radius */
-  --radius: 0.5rem;
   
   /* Sidebar - Premium dark */
   --sidebar: oklch(0.11 0.005 285);
@@ -145,7 +216,7 @@
   }
 }
 
-/* Custom scrollbar for dark theme */
+/* Custom scrollbar */
 @layer base {
   ::-webkit-scrollbar {
     width: 8px;
@@ -157,12 +228,12 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.3 0.01 285);
+    background: var(--border);
     border-radius: 4px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.4 0.01 285);
+    background: var(--muted-foreground);
   }
 }
 

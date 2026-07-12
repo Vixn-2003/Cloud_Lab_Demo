@@ -303,7 +303,8 @@
     "copyCode": "Copy Code",
     "copied": "Copied!",
     "language": "Language",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "theme": "Theme"
   },
   "auth": {
     "loginTitle": "System Login",

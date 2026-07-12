@@ -35,6 +35,7 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 import { useAuthStore } from '@/lib/auth-store';
 import {
   DropdownMenu,
@@ -359,13 +360,22 @@ export function AppSidebar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-slate-800" />
-                <div className="px-2 py-1.5 group-data-[collapsible=icon]:block hidden">
-                  <LanguageSwitcher />
+                <div className="px-2 py-1.5 group-data-[collapsible=icon]:block hidden space-y-2">
+                  <div className="flex justify-center">
+                    <LanguageSwitcher />
+                  </div>
+                  <div className="flex justify-center">
+                    <ThemeSwitcher />
+                  </div>
                 </div>
-                <div className="px-2 py-1.5 group-data-[collapsible=icon]:hidden">
+                <div className="px-2 py-1.5 group-data-[collapsible=icon]:hidden space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-400">{tCommon('language') || 'Ngôn ngữ'}</span>
                     <LanguageSwitcher />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">{tCommon('theme') || 'Giao diện'}</span>
+                    <ThemeSwitcher />
                   </div>
                 </div>
                 <DropdownMenuSeparator className="bg-slate-800" />
