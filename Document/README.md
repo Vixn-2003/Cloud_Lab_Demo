@@ -28,7 +28,7 @@ Document/
 > Nhấp trực tiếp vào các liên kết màu xanh dưới đây để mở nhanh tài liệu tương ứng.
 
 ### 📌 Tài Liệu Cốt Lõi (Core Entrance Docs)
-*   **[PROJECT_FLOW.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/PROJECT_FLOW.md)**: Nhật ký tiến độ toàn bộ 15 phiên làm việc và backlog tính năng chính thức. Chứa **Chỉ thị Tối cao (AI Instructions)** bắt buộc các Agent tuân thủ.
+*   **[PROJECT_FLOW.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/PROJECT_FLOW.md)**: Nhật ký tiến độ toàn bộ 18 phiên làm việc và backlog tính năng chính thức. Chứa **Chỉ thị Tối cao (AI Instructions)** bắt buộc các Agent tuân thủ.
 
 ---
 
@@ -42,6 +42,7 @@ Document/
 *   **[SOLUTIONS_FLOW.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/SOLUTIONS_FLOW.md)**: Sơ đồ tuần tự (Sequence Diagrams) mô tả luồng dữ liệu của 4 Giải pháp cốt lõi (Monaco, Web Terminal, Labtainer Online, Labtainer ZIP).
 *   **[PROS_CONS_LAB_SOLUTIONS.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/PROS_CONS_LAB_SOLUTIONS.md)**: Bảng phân tích chi tiết Ưu và Nhược điểm của các giải pháp thực thi, kèm theo định hướng vận hành thương mại.
 *   **[DATABASE_CHOICE_EXPLANATION.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/DATABASE_CHOICE_EXPLANATION.md)**: Giải trình kiến trúc và lý do sử dụng song song SQLite cho local/demo và định hướng MySQL/Postgres cho production & lab sandbox.
+*   **[DOCKER_CONCEPTS_EXPLANATION.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/DOCKER_CONCEPTS_EXPLANATION.md)**: Giải thích trực quan cơ chế hoạt động của Docker (Cloud Registry vs Local Cache) để dev mới dễ dàng nắm bắt bản chất.
 *   **[Docker_Resource_Limits.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/Docker_Resource_Limits.md)**: Đặc tả cấu hình bảo mật Sandbox (RAM/CPU/PIDs limit) phòng chống mã độc và **Fork Bomb**.
 *   **[CLOUD_LAB_MY_LABS_UI_UPGRADE_SPEC.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/CLOUD_LAB_MY_LABS_UI_UPGRADE_SPEC.md)**: Tài liệu đặc tả nâng cấp giao diện "Bài Lab của tôi" và Sidebar học trình.
 *   **[VERCEL_AI_FRONTEND_SPEC.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/VERCEL_AI_FRONTEND_SPEC.md)**: Tiêu chuẩn thiết kế giao diện cao cấp (Enterprise Spec) cho Vercel AI sinh mã nguồn React V2.
@@ -59,6 +60,7 @@ Document/
 ---
 
 ### 🧪 4. Kiểm Thử & Xác Minh (`04_Testing_Verification`)
+*   **[LAB_TESTCASES_CATALOG.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/04_Testing_Verification/LAB_TESTCASES_CATALOG.md)**: Danh mục đầy đủ chi tiết các cặp dữ liệu Input/Output và thuật toán chấm điểm tự động cho toàn bộ 17 bài Lab trên hệ thống.
 *   **[LAB_TESTING_SCENARIO.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/04_Testing_Verification/LAB_TESTING_SCENARIO.md)**: Kịch bản kiểm thử toàn diện bằng tiếng Việt cho 9 bài Lab mẫu.
 *   **[LAB_TEST_PLAN_REPORT.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/04_Testing_Verification/LAB_TEST_PLAN_REPORT.md)**: Báo cáo kết quả kiểm thử tự động, xác minh điểm số tuyệt đối 100/100 cho 9 bài Lab.
 *   **[TEST_PLAN_WORKFLOWS.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/04_Testing_Verification/TEST_PLAN_WORKFLOWS.md)**: Ma trận test case và kế hoạch kiểm thử các Workflows chính.
@@ -66,7 +68,7 @@ Document/
 ---
 
 ### 📝 5. Nhật Ký Hoàn Thành & Báo Cáo Thực Tế (`05_Walkthroughs_Reports`)
-*   **[walkthrough.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/05_Walkthroughs_Reports/walkthrough.md)**: Báo cáo kết quả thực thi & xác minh an toàn Sandbox (Active Walkthrough).
+*   **[walkthrough.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/05_Walkthroughs_Reports/walkthrough.md)**: Báo cáo kết quả thực thi chuyển đổi dự án sang pnpm Monorepo và Turborepo (Active Walkthrough).
 *   **[walkthrough_labtainer_integration.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/05_Walkthroughs_Reports/walkthrough_labtainer_integration.md)**: Hướng dẫn vận hành hệ thống thật (Production Guide) sau khi tích hợp NPS Labtainer Core.
 *   **[walkthrough_upload_file_submission.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/05_Walkthroughs_Reports/walkthrough_upload_file_submission.md)**: Hướng dẫn vận hành luồng nộp bài tập qua tệp ZIP.
 *   **[walkthrough_Phare2.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/05_Walkthroughs_Reports/walkthrough_Phare2.md)**: Nhật ký hoàn thành tích hợp SQLite và manual Stdin.

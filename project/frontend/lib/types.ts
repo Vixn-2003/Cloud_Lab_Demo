@@ -143,6 +143,45 @@ export interface SubmissionFilters {
 export interface DashboardStats {
   totalLabs: number;
   completedLabs: number;
-  averageScore: number;
   totalSubmissions: number;
+}
+
+export interface Semester {
+  id: string;
+  name: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface Class {
+  id: string;
+  name: string;
+  subject_id: string;
+  semester_id: string;
+  semester_name?: string;
+}
+
+export interface PracticeSession {
+  id: string;
+  name: string;
+  banner_url?: string | null;
+  location?: string | null;
+  class_id: string;
+  class_name?: string;
+  subject_id?: string;
+  start_time: string;
+  end_time: string;
+  status: 'draft' | 'scheduled' | 'active' | 'frozen' | 'ended';
+  allow_browser: boolean;
+  freeze_before_end_minutes: number;
+  penalty_minutes_per_wrong_submit: number;
+  submission_mode: 'auto' | 'manual';
+  created_by?: string;
+  labIds?: string[];
+  participants?: any[];
+  instructors?: any[];
+  exam_room?: string;
+  seat_ip?: string;
+  variant_code?: string;
+  participant_status?: string;
 }

@@ -15,7 +15,14 @@
     "terminal": "Terminal thử nghiệm",
     "support": "Hỗ trợ",
     "helpCenter": "Trung tâm hỗ trợ",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "instructorPanel": "Khu vực Giảng viên",
+    "sessions": "Quản lý ca thi",
+    "createSession": "Tạo ca thực hành",
+    "monitoring": "Giám sát phòng thi",
+    "grading": "Chấm bài thủ công",
+    "plagiarism": "Phát hiện sao chép",
+    "approvals": "Phê duyệt bài tập"
   },
   "dashboard": {
     "greeting": {
@@ -301,12 +308,37 @@
     "score": "Điểm",
     "of": "trên",
     "student": "Sinh viên",
+    "instructor": "Giảng viên",
+    "admin": "Quản trị viên",
     "learningMode": "Chế độ học tập",
     "continue": "Tiếp tục",
     "review": "Xem lại",
     "open": "Mở",
     "copyCode": "Sao chép code",
     "copied": "Đã sao chép!"
+  },
+  "auth": {
+    "loginTitle": "Đăng nhập hệ thống",
+    "loginSubtitle": "Nhập tài khoản để tiếp tục làm bài thực hành",
+    "brandSubtitle": "Nền tảng thực hành & thi ATTT thế hệ mới",
+    "username": "Tên đăng nhập",
+    "password": "Mật khẩu",
+    "submit": "Đăng nhập",
+    "submitting": "Đang đăng nhập...",
+    "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không chính xác.",
+    "loginSuccess": "Đăng nhập thành công",
+    "welcomeBack": "Chào mừng trở lại",
+    "loginFailed": "Đăng nhập thất bại",
+    "serverError": "Lỗi kết nối máy chủ.",
+    "orDemoWith": "Hoặc thử nhanh tài khoản demo",
+    "student": "Sinh viên",
+    "instructor": "Giảng viên",
+    "admin": "Quản trị viên",
+    "filledAccount": "Đã điền tài khoản {role}",
+    "ssoLogin": "Đăng nhập bằng Office 365 (SSO)",
+    "ssoConfigRequired": "Đăng nhập SSO chưa được cấu hình cho tên miền này. Vui lòng xác nhận thêm.",
+    "fillAllFields": "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.",
+    "logout": "Đăng xuất"
   },
   "breadcrumb": {
     "home": "Trang chủ",
@@ -315,7 +347,8 @@
     "settings": "Cài đặt",
     "workspace": "Viết code",
     "terminal": "Terminal",
-    "result": "Kết quả"
+    "result": "Kết quả",
+    "login": "Đăng nhập"
   },
   "languageSwitcher": {
     "label": "Ngôn ngữ",

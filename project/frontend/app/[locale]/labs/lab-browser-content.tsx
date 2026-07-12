@@ -33,7 +33,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScoreBadge } from '@/components/score-display';
 import { EmptyState } from '@/components/empty-state';
-import { getLabs, getSubjects, getSubmissions, getFaculties } from '@/lib/api';
+import { getLabs, getSubjects, getSubmissions, getFaculties, getActiveSession, getSessionLeaderboard, getSessionMcqs, submitSessionMcqs, getSessionMcqAnswers } from '@/lib/api';
 import { enrichLabs } from '@/lib/data-enrichment';
 import { LabBrowserSkeleton } from './lab-browser-skeleton';
 import {
@@ -67,15 +67,70 @@ export function LabBrowserContent() {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('all');
   const [selectedEnv, setSelectedEnv] = useState<string>('all');
 
+  const [activeSession, setActiveSession] = useState<any | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>('');
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+
+  // MCQ State
+  const [sessionMcqs, setSessionMcqs] = useState<any[]>([]);
+  const [selectedMcqAnswers, setSelectedMcqAnswers] = useState<Record<string, number>>({});
+  const [mcqResult, setMcqResult] = useState<any | null>(null);
+  const [mcqSubmitting, setMcqSubmitting] = useState(false);
+  const [activeExamTab, setActiveExamTab] = useState<'coding' | 'mcq'>('coding');
+
+  const handleSelectOption = (questionId: string, optionIndex: number) => {
+    setSelectedMcqAnswers(prev => ({
+      ...prev,
+      [questionId]: optionIndex
+    }));
+  };
+
+  const handleSubmitMcq = async () => {
+    if (sessionMcqs.length === 0) return;
+    setMcqSubmitting(true);
+    try {
+      const answersPayload = Object.keys(selectedMcqAnswers).map(qId => ({
+        questionId: qId,
+        selectedOption: selectedMcqAnswers[qId]
+      }));
+      const res = await submitSessionMcqs(activeSession.id, answersPayload);
+      setMcqResult(res);
+      alert(`Nộp bài trắc nghiệm thành công! Kết quả: ${res.correct}/${res.total} câu đúng (${res.score} điểm).`);
+    } catch (e: any) {
+      alert("Nộp bài trắc nghiệm lỗi: " + e.message);
+    } finally {
+      setMcqSubmitting(false);
+    }
+  };
+
+  const handleOpenLeaderboard = async () => {
+    if (!activeSession) return;
+    setShowLeaderboard(true);
+    setLeaderboardLoading(true);
+    try {
+      const data = await getSessionLeaderboard(activeSession.id);
+      setLeaderboard(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
-        const [rawLabs, rawSubjects, rawSubmissions, rawFaculties] = await Promise.all([
+        const [rawLabs, rawSubjects, rawSubmissions, rawFaculties, activeSess] = await Promise.all([
           getLabs(),
           getSubjects(),
           getSubmissions(),
           getFaculties(),
+          getActiveSession().catch(() => null),
         ]);
+
+        setActiveSession(activeSess);
 
         // Proactive environment fix for Winlocker VB6 analysis lab as per Cloud Lab Spec Section 19
         const rawLabsWithFix = rawLabs.map(lab => {
@@ -88,10 +143,30 @@ export function LabBrowserContent() {
           return lab;
         });
 
-        const enriched = enrichLabs(rawLabsWithFix, rawSubmissions, rawSubjects);
+        // LOCKING PROCESS: Filter labs to only show active session labs if student is in an active session
+        const filteredRawLabs = activeSess && activeSess.labIds
+          ? rawLabsWithFix.filter(lab => activeSess.labIds.includes(lab.id))
+          : rawLabsWithFix;
+
+        const enriched = enrichLabs(filteredRawLabs, rawSubmissions, rawSubjects);
         setLabs(enriched);
         setSubjects(rawSubjects);
         setFaculties(rawFaculties);
+
+        if (activeSess) {
+          try {
+            const mcqs = await getSessionMcqs(activeSess.id);
+            setSessionMcqs(mcqs);
+            const answers = await getSessionMcqAnswers(activeSess.id);
+            const answerMap: Record<string, number> = {};
+            for (const ans of answers) {
+              answerMap[ans.question_id] = ans.selected_option;
+            }
+            setSelectedMcqAnswers(answerMap);
+          } catch (e) {
+            console.error("Failed to load session MCQs:", e);
+          }
+        }
 
         // Auto-filter based on search query params if provided
         const facultyIdParam = searchParams.get('facultyId');
@@ -106,6 +181,28 @@ export function LabBrowserContent() {
     }
     loadData();
   }, [searchParams]);
+
+  // Countdown timer logic
+  useEffect(() => {
+    if (!activeSession) return;
+
+    const timer = setInterval(() => {
+      const diffMs = new Date(activeSession.end_time).getTime() - new Date().getTime();
+      if (diffMs <= 0) {
+        setTimeLeft('ĐÃ HẾT GIỜ THI');
+        clearInterval(timer);
+      } else {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+        
+        const pad = (num: number) => num.toString().padStart(2, '0');
+        setTimeLeft(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeSession]);
 
   const handleFacultyChange = (facultyId: string) => {
     setSelectedFacultyId(facultyId);
@@ -351,12 +448,46 @@ export function LabBrowserContent() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+      {/* Active Exam Session Banner */}
+      {activeSession && (
+        <div className="mx-6 mt-6 p-4 rounded-xl border border-red-500/25 bg-red-950/15 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 animate-pulse-subtle shrink-0">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge variant="destructive" className="bg-red-650 text-white animate-pulse uppercase tracking-wider text-[9px] font-bold">Ca thi hoạt động</Badge>
+              <h2 className="text-sm font-extrabold text-white">{activeSession.name}</h2>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Phòng thi: <span className="text-slate-300 font-semibold">{activeSession.location || 'Phòng máy'}</span> | 
+              Lớp: <span className="text-slate-300 font-semibold">{activeSession.class_name}</span> |
+              Mã đề: <span className="text-primary font-bold font-mono">{activeSession.variant_code || 'Tự do'}</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenLeaderboard}
+              className="border-red-500/30 hover:bg-red-500/20 text-red-400 hover:text-white flex items-center gap-1.5 h-10 px-3"
+            >
+              <Award className="h-4 w-4" />
+              <span>Bảng xếp hạng</span>
+            </Button>
+            <div className="bg-slate-900/85 border border-slate-800 px-4 py-2 rounded-lg flex flex-col items-center min-w-[130px] h-10 justify-center">
+              <span className="text-[9px] uppercase font-bold text-slate-500 leading-none mb-0.5">Thời gian còn lại</span>
+              <span className="text-sm font-extrabold text-red-500 font-mono tracking-wider leading-none">{timeLeft}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="p-6 pb-4 space-y-5 shrink-0 border-b border-border/40 bg-card/10">
         <div>
           <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">{t('title')}</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Theo dõi tiến độ học tập, bắt đầu bài thực hành mới hoặc tiếp tục hoàn thiện các lab đang làm dở.
+            {activeSession
+              ? 'Lưu ý: Bạn đang tham gia ca thi thực hành. Hệ thống đã tự động khóa cứng danh sách bài thực hành của ca thi.'
+              : 'Theo dõi tiến độ học tập, bắt đầu bài thực hành mới hoặc tiếp tục hoàn thiện các lab đang làm dở.'}
           </p>
         </div>
 
@@ -428,97 +559,181 @@ export function LabBrowserContent() {
         )}
 
         {/* Tabs and Filters Row */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-            <TabsList className="h-9.5 p-1 bg-muted/30 border border-border/50 rounded-lg w-fit overflow-x-auto">
-              {tabConfig.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value} className="text-xs h-7.5 px-3 py-1 font-semibold transition-all">
-                  {tab.label}
-                  <span className={`ml-1.5 text-[10px] rounded-full px-1.5 py-0.2 select-none ${
-                    tabCounts[tab.value] > 0
-                      ? 'bg-primary/15 text-primary font-extrabold'
-                      : 'text-muted-foreground opacity-55 font-normal'
-                  }`}>
-                    {tabCounts[tab.value]}
-                  </span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
+        {!activeSession ? (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+              <TabsList className="h-9.5 p-1 bg-muted/30 border border-border/50 rounded-lg w-fit overflow-x-auto">
+                {tabConfig.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="text-xs h-7.5 px-3 py-1 font-semibold transition-all">
+                    {tab.label}
+                    <span className={`ml-1.5 text-[10px] rounded-full px-1.5 py-0.2 select-none ${
+                      tabCounts[tab.value] > 0
+                        ? 'bg-primary/15 text-primary font-extrabold'
+                        : 'text-muted-foreground opacity-55 font-normal'
+                    }`}>
+                      {tabCounts[tab.value]}
+                    </span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-            <div className="flex items-center gap-3 flex-wrap md:flex-nowrap">
-              {/* Faculty Filter */}
-              <Select value={selectedFacultyId} onValueChange={handleFacultyChange}>
-                <SelectTrigger id="faculty-select" size="sm" className="w-[130px] bg-background/50 border-border/70 hover:bg-accent/40 text-xs h-9">
-                  <SelectValue placeholder="Khoa" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-xs">Tất cả Khoa</SelectItem>
-                  {faculties.map((f) => (
-                    <SelectItem key={f.id} value={f.id} className="text-xs">
-                      {f.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Subject Filter */}
-              <Select value={selectedSubjectId} onValueChange={handleSubjectChange}>
-                <SelectTrigger id="subject-select" size="sm" className="w-[140px] bg-background/50 border-border/70 hover:bg-accent/40 text-xs h-9" disabled={selectedFacultyId === 'all'}>
-                  <SelectValue placeholder="Môn học" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-xs">Tất cả Môn học</SelectItem>
-                  {subjects
-                    .filter((s) => s.facultyId === selectedFacultyId)
-                    .map((s) => (
-                      <SelectItem key={s.id} value={s.id} className="text-xs">
-                        {s.title}
+              <div className="flex items-center gap-3 flex-wrap md:flex-nowrap">
+                {/* Faculty Filter */}
+                <Select value={selectedFacultyId} onValueChange={handleFacultyChange}>
+                  <SelectTrigger id="faculty-select" size="sm" className="w-[130px] bg-background/50 border-border/70 hover:bg-accent/40 text-xs h-9">
+                    <SelectValue placeholder="Khoa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs">Tất cả Khoa</SelectItem>
+                    {faculties.map((f) => (
+                      <SelectItem key={f.id} value={f.id} className="text-xs">
+                        {f.title}
                       </SelectItem>
                     ))}
-                </SelectContent>
-              </Select>
+                  </SelectContent>
+                </Select>
 
-              {/* Environment Filter */}
-              <Select value={selectedEnv} onValueChange={setSelectedEnv}>
-                <SelectTrigger id="env-type-select" size="sm" className="w-[150px] bg-background/50 border-border/70 hover:bg-accent/40 text-xs h-9">
-                  <SelectValue placeholder="Loại môi trường" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-xs">Tất cả Môi trường</SelectItem>
-                  <SelectItem value="single_runtime" className="text-xs">Python/Java Runtime</SelectItem>
-                  <SelectItem value="single_machine" className="text-xs">Ubuntu CLI (VM)</SelectItem>
-                  <SelectItem value="multi_node" className="text-xs">Mạng nhiều node</SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Subject Filter */}
+                <Select value={selectedSubjectId} onValueChange={handleSubjectChange}>
+                  <SelectTrigger id="subject-select" size="sm" className="w-[140px] bg-background/50 border-border/70 hover:bg-accent/40 text-xs h-9" disabled={selectedFacultyId === 'all'}>
+                    <SelectValue placeholder="Môn học" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs">Tất cả Môn học</SelectItem>
+                    {subjects
+                      .filter((s) => s.facultyId === selectedFacultyId)
+                      .map((s) => (
+                        <SelectItem key={s.id} value={s.id} className="text-xs">
+                          {s.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
 
-              {/* Search */}
-              <div className="relative w-full md:w-64 min-w-[180px]">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder={t('searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 text-xs"
-                />
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
+                {/* Environment Filter */}
+                <Select value={selectedEnv} onValueChange={setSelectedEnv}>
+                  <SelectTrigger id="env-type-select" size="sm" className="w-[150px] bg-background/50 border-border/70 hover:bg-accent/40 text-xs h-9">
+                    <SelectValue placeholder="Loại môi trường" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="text-xs">Tất cả Môi trường</SelectItem>
+                    <SelectItem value="single_runtime" className="text-xs">Python/Java Runtime</SelectItem>
+                    <SelectItem value="single_machine" className="text-xs">Ubuntu CLI (VM)</SelectItem>
+                    <SelectItem value="multi_node" className="text-xs">Mạng nhiều node</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Search */}
+                <div className="relative w-full md:w-64 min-w-[180px]">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder={t('searchPlaceholder')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9 text-xs"
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                      onClick={() => setSearchQuery('')}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
+          </Tabs>
+        ) : (
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+              Bài thi thực hành được chỉ định:
+            </span>
+            {sessionMcqs.length > 0 && (
+              <div className="flex items-center bg-slate-900/60 p-1 border border-slate-800 rounded-lg shrink-0">
+                <Button
+                  variant={activeExamTab === 'coding' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActiveExamTab('coding')}
+                  className="text-xs h-7 px-3 py-1 font-semibold"
+                >
+                  Phần Lập trình ({labs.length})
+                </Button>
+                <Button
+                  variant={activeExamTab === 'mcq' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActiveExamTab('mcq')}
+                  className="text-xs h-7 px-3 py-1 font-semibold flex items-center gap-1"
+                >
+                  <span>Phần Trắc nghiệm ({sessionMcqs.length})</span>
+                  {mcqResult && <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[9px] h-4 py-0 px-1">{mcqResult.score}đ</Badge>}
+                </Button>
+              </div>
+            )}
           </div>
-        </Tabs>
+        )}
       </div>
 
       {/* Labs List */}
       <div className="flex-1 overflow-y-auto px-6 py-5 bg-background/25">
-        {filteredLabs.length === 0 ? (
+        {activeExamTab === 'mcq' ? (
+          <div className="max-w-3xl mx-auto space-y-6">
+            <Card className="bg-slate-950/40 border-slate-900 shadow-md">
+              <CardHeader>
+                <CardTitle className="text-white text-base font-bold">Phần thi Trắc nghiệm (MCQ Exam)</CardTitle>
+                <CardDescription className="text-slate-400">
+                  Trả lời toàn bộ câu hỏi trắc nghiệm dưới đây và nhấn "Nộp bài trắc nghiệm" để hoàn tất.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {sessionMcqs.map((q, idx) => {
+                  return (
+                    <div key={q.id} className="space-y-3 p-4 bg-slate-900/40 border border-slate-800/80 rounded-lg">
+                      <h4 className="text-slate-200 font-semibold text-sm">
+                        Câu {idx + 1}: {q.question_text}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1.5">
+                        {q.options.map((option: string, optIdx: number) => {
+                          const isSelected = selectedMcqAnswers[q.id] === optIdx;
+                          return (
+                            <button
+                              key={optIdx}
+                              type="button"
+                              onClick={() => handleSelectOption(q.id, optIdx)}
+                              className={`p-3 text-left text-xs rounded border transition-all ${
+                                isSelected
+                                  ? 'bg-primary/10 border-primary text-primary font-bold shadow-sm shadow-primary/5'
+                                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div className="pt-4 border-t border-slate-900 flex justify-between items-center">
+                  <span className="text-xs text-slate-500">
+                    Đã tích chọn: {Object.keys(selectedMcqAnswers).length}/{sessionMcqs.length} câu
+                  </span>
+                  <Button
+                    onClick={handleSubmitMcq}
+                    disabled={mcqSubmitting || Object.keys(selectedMcqAnswers).length === 0}
+                    className="bg-primary text-primary-foreground font-bold flex items-center gap-1.5"
+                  >
+                    {mcqSubmitting ? <RotateCcw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    <span>Nộp bài trắc nghiệm</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : filteredLabs.length === 0 ? (
           <EmptyState
             icon={<Info className="h-8 w-8 text-muted-foreground" />}
             title={emptyStateData.title}
@@ -551,6 +766,126 @@ export function LabBrowserContent() {
           </div>
         )}
       </div>
+
+      {showLeaderboard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-slate-950 border border-slate-900 w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-900 flex items-center justify-between bg-slate-950/80 sticky top-0 z-10">
+              <div>
+                <h3 className="text-white font-extrabold text-base flex items-center gap-2">
+                  <Award className="h-5 w-5 text-yellow-500 animate-pulse" />
+                  Bảng xếp hạng ca thi (ACM-ICPC Mode)
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Xếp hạng dựa trên số bài giải đúng (Accepted) và tổng thời gian phạt (Penalty).
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowLeaderboard(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              {leaderboard[0]?.isFrozen && (
+                <div className="bg-amber-950/20 border border-amber-500/25 p-3 rounded-lg flex items-start gap-2.5">
+                  <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <h4 className="text-xs font-bold text-amber-400">Bảng xếp hạng Đang bị đóng băng!</h4>
+                    <p className="text-[11px] text-slate-400">
+                      Thời gian thi đã bước vào giai đoạn đóng băng (Freeze Window). Kết quả nộp bài mới của bạn và các thí sinh khác sẽ hiển thị là Đang chấm (?) trên bảng điểm công khai của học sinh.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {leaderboardLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
+                  <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+                  <span className="text-xs font-medium">Đang tải bảng điểm xếp hạng...</span>
+                </div>
+              ) : leaderboard.length === 0 ? (
+                <div className="text-center py-20 text-slate-500 text-xs font-semibold">
+                  Chưa có dữ liệu xếp hạng của ca thi này.
+                </div>
+              ) : (
+                <div className="overflow-x-auto border border-slate-900 rounded-lg">
+                  <table className="w-full text-xs text-left text-slate-300">
+                    <thead className="text-[10px] uppercase bg-slate-950 text-slate-400 border-b border-slate-900">
+                      <tr>
+                        <th className="px-4 py-2.5 font-bold text-center w-12">Hạng</th>
+                        <th className="px-4 py-2.5 font-bold">MSSV</th>
+                        <th className="px-4 py-2.5 font-bold">Thí sinh</th>
+                        <th className="px-4 py-2.5 font-bold text-center w-16">Đề</th>
+                        <th className="px-4 py-2.5 font-bold text-center w-24">Bài giải được</th>
+                        <th className="px-4 py-2.5 font-bold text-center w-24">Tổng Penalty</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaderboard.map((item, idx) => {
+                        const isTop3 = item.rank <= 3;
+                        const rankColor = 
+                          item.rank === 1 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                          item.rank === 2 ? 'bg-slate-300/20 text-slate-300 border-slate-300/30' :
+                          item.rank === 3 ? 'bg-amber-600/20 text-amber-500 border-amber-600/30' : 
+                          'bg-slate-900 text-slate-400 border-slate-800';
+
+                        return (
+                          <tr 
+                            key={item.userId} 
+                            className={`border-b border-slate-900 hover:bg-slate-900/30 transition-colors ${
+                              item.userId === user?.id ? 'bg-primary/5 border-l-2 border-l-primary' : ''
+                            }`}
+                          >
+                            <td className="px-4 py-3 text-center">
+                              <Badge className={`font-mono font-bold w-6 h-6 rounded-full flex items-center justify-center p-0 border ${rankColor}`}>
+                                {item.rank}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 font-mono font-bold text-white">{item.studentCode || '—'}</td>
+                            <td className="px-4 py-3 font-semibold text-white">
+                              <div className="flex items-center gap-2">
+                                <span>{item.fullName}</span>
+                                {item.userId === user?.id && (
+                                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px]">Bạn</Badge>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <Badge variant="outline" className="border-slate-800 text-slate-400 font-mono text-[10px]">
+                                {item.variantCode || 'Mặc định'}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-center text-sm font-extrabold text-emerald-400">
+                              {item.solvedCount}
+                            </td>
+                            <td className="px-4 py-3 text-center font-mono font-semibold text-slate-300">
+                              {item.totalPenalty} <span className="text-[10px] text-slate-500">phút</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-900 flex justify-end bg-slate-950">
+              <Button onClick={() => setShowLeaderboard(false)} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold">
+                Đóng bảng xếp hạng
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

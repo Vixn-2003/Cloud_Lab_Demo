@@ -5,10 +5,8 @@ import { Toaster } from 'sonner';
 import { notFound } from 'next/navigation';
 import { routing } from '@/src/i18n/routing';
 
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/app-sidebar';
-import { PageBreadcrumb } from '@/components/page-breadcrumb';
-import { Separator } from '@/components/ui/separator';
+import { AuthGuard } from '@/components/auth-guard';
+import { LayoutContent } from '@/components/layout-content';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -50,19 +48,11 @@ export default async function LocaleLayout({
     <html lang={locale} className={`${inter.variable} ${jetbrainsMono.variable} dark bg-background`}>
       <body className="font-sans antialiased min-h-screen">
         <NextIntlClientProvider messages={messages}>
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <PageBreadcrumb />
-              </header>
-              <main className="flex-1 overflow-auto">
-                {children}
-              </main>
-            </SidebarInset>
-          </SidebarProvider>
+          <AuthGuard>
+            <LayoutContent>
+              {children}
+            </LayoutContent>
+          </AuthGuard>
           <Toaster 
             theme="dark" 
             position="bottom-right"
@@ -79,3 +69,4 @@ export default async function LocaleLayout({
     </html>
   );
 }
+

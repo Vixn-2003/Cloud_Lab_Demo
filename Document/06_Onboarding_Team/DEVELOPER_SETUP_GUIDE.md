@@ -240,3 +240,29 @@ node test_nps_labtainer.js
 *   **Khắc phục**:
     *   *Trên Windows*: Bật biến môi trường `MOCK_PTY=true` trong file `.env` để backend bypass thư viện native và chạy Mock PTY an toàn.
     *   *Trên Linux/macOS*: Đảm bảo đã cài đặt `build-essential` hoặc Xcode Command Line Tools.
+
+---
+
+## 📊 5. Bản Đồ Vị Trí Các Bộ Test (Test Suite Directory Map)
+
+Để hỗ trợ phát triển và duy trì hệ thống ổn định, các bộ test trong dự án được chia làm hai phần rõ rệt:
+
+### 1. Bộ Testcase Chấm Bài của Học Viên (Student Lab Testcases)
+Đây là các bộ dữ liệu Input / Output ẩn được sử dụng để tự động chấm điểm bài làm của sinh viên.
+*   **Vị trí lưu trữ**: Tệp **[project/backend/src/models/ProblemRegistry.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/models/ProblemRegistry.ts)**.
+*   **Mô tả**: Toàn bộ dữ liệu ví dụ mẫu (`examples`) và bộ testcase chấm điểm ẩn (`testcases`) được định nghĩa trực tiếp trong đối tượng `labs` dưới dạng mảng JSON:
+    ```typescript
+    testcases: [
+      { input: "dữ liệu đầu vào 1", expectedOutput: "kết quả mong đợi 1" },
+      { input: "dữ liệu đầu vào 2", expectedOutput: "kết quả mong đợi 2" }
+    ]
+    ```
+
+### 2. Các Kịch Bản Kiểm Thử Tự Động Hệ Thống (System Integration & Safety Tests)
+Đây là các script chạy độc lập dùng để nhà phát triển mới xác minh hoạt động của toàn bộ Backend, Docker API và Cơ sở dữ liệu SQLite sau khi kéo code về.
+*   **Vị trí lưu trữ**: Nằm trực tiếp tại thư mục gốc của Backend **`project/backend/`**:
+    *   **[test_all_labs.js](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/test_all_labs.js)**: Chạy kiểm thử E2E tự động, nộp bài thật lên toàn bộ 9 bài lab cốt lõi.
+    *   **[test_new_programming_labs.js](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/test_new_programming_labs.js)**: Chạy kiểm thử tự động nộp bài cho 7 bài toán giải thuật mới tích hợp.
+    *   **[test_resource_limits.js](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/test_resource_limits.js)**: Kiểm thử phòng vệ an toàn Docker (Out of Memory, CPU cap, Fork Bomb).
+    *   **[test_nps_labtainer.js](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/test_nps_labtainer.js)**: Kiểm thử tích hợp PTY Terminal kết nối NPS Labtainer Docker container và giải mã báo cáo `.report`.
+

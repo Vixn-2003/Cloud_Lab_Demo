@@ -1,59 +1,50 @@
-# Nhật Ký Thực Thi (Walkthrough) — Tích Hợp & Kiểm Thử 7 Bài Toán Lập Trình Mới
+# Nhật ký thực thi: Giai đoạn 9 — MCQ & Workflow phê duyệt nâng cao
 
-Tài liệu này tổng hợp toàn bộ các thay đổi mã nguồn, giải thuật tối ưu và kết quả thử nghiệm thực tế cho **7 bài toán lập trình mới** được đưa vào hệ thống Online Coding Lab.
-
----
-
-## 🛠️ Thay Đổi Đã Thực Hiện
-
-### 1. Đăng Ký Cấu HÌnh Bài Lab
-- **Tệp chỉnh sửa**: [ProblemRegistry.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/models/ProblemRegistry.ts).
-
-### 2. Phát Triển Bộ Mã Nguồn Mẫu (Reference Solutions)
-- **Hồ sơ sử dụng**: `python_basic` (Python 3).
-
-### 3. Sửa Lỗi Console Rỗng khi Chạy Thử (Run Code)
-- **Tệp chỉnh sửa**: [lab-workspace-content.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/[locale]/labs/[labId]/lab-workspace-content.tsx).
-
-### 4. Sửa Lỗi Hiển Thị Đuôi File Ở Workspace Editor
-- **Tệp chỉnh sửa**: [index.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/index.ts).
-- **Nguyên nhân bug**: Khi lấy thông tin cấu hình qua API `GET /profiles/:id`, Backend bỏ sót không trả về trường `extension`. Do đó trên Frontend, biến `profile.extension` bị `undefined`, khiến tên tệp hiển thị ở tiêu đề tab Workspace Editor bị rơi vào fallback `.sh` (`Main.sh`), mặc dù môi trường thực thi của bài toán thực tế là Python 3 (`python_basic`).
-- **Giải pháp**: Bổ sung trường `extension: profile.extension` vào trong đối tượng JSON trả về của endpoint `GET /profiles/:id` ở Backend. Khi trang tải lại, Frontend nhận diện chính xác đuôi `.py`, giúp tiêu đề tab hiển thị đúng là `Main.py` (hoặc `.cpp`, `.java` tương ứng với từng bài lab).
-
-### 5. Triển Khai Tách Biệt Ví Dụ Mẫu (Examples) & Bộ Testcases (Testcases) Ẩn
-- **Thay đổi kiểu dữ liệu**: Bổ sung trường `examples` dạng `{ input: string; output: string }[]` vào `LabConfig` ở Backend và `Lab` ở Frontend.
-- **Nâng cấp UI Workspace**: Hiển thị khu vực **Ví dụ mẫu (Examples)** cực kỳ đẹp mắt kèm nút bấm **"Dùng làm Custom Input"** tiện lợi cho sinh viên.
-
-### 6. Sửa Lỗi Cảnh Báo ENVIRONMENT_FALLBACK của next-intl
-- **Tệp chỉnh sửa**:
-  - [lab-browser-content.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/[locale]/labs/lab-browser-content.tsx)
-  - [page.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/[locale]/submissions/page.tsx)
-- **Nguyên nhân bug**: `next-intl` trong chế độ Server Components / Client Hydration yêu cầu một mốc thời gian tĩnh làm tham số `now` khi định dạng thời gian tương đối (`relativeTime`). Nếu không được cung cấp, nó sẽ đưa ra cảnh báo console về việc fallback về thời gian hiện tại của client, có thể dẫn đến lỗi lệch Hydration (Hydration Mismatch).
-- **Giải pháp**:
-  - Import hook `useNow` từ `'next-intl'`.
-  - Khởi tạo giá trị tĩnh `const now = useNow();` bên trong Client Component.
-  - Truyền tham số `now` này vào hàm định dạng: `format.relativeTime(date, { now })`.
+Toàn bộ các yêu cầu của Giai đoạn 9 đã được hoàn thành xuất sắc! Hệ thống hiện tại có phân hệ Ngân hàng trắc nghiệm (MCQ) hoàn chỉnh, quy trình phê duyệt bài thực hành (Exercise Approval Workflow) của Admin, và đồng bộ truyền tin real-time Socket.IO.
 
 ---
 
-## 🧪 Kết Quả Xác Minh (Validation Results)
+## 1. Kết quả Kiểm thử & Xác minh
 
-### Chạy Kịch Bản Kiểm Thử Tự Động
-Mã lệnh chạy thực tế:
-```bash
-node test_new_programming_labs.js
-```
+### 1.1 Kiểm thử tự động trắc nghiệm & phê duyệt (`test_mcq_approvals.js`)
+Chúng tôi đã xây dựng và chạy thành công kịch bản kiểm thử E2E tự động `test_mcq_approvals.js` xác minh 11/11 ca kiểm thử đạt điểm tối đa **PASS ✅**:
 
-### Kết quả xuất ra từ hệ thống:
-```
-🎉 SUCCESS: All 7 new labs successfully passed integration tests with 100/100 points!
-```
+| Ca kiểm thử | Mô tả | Endpoint | Phương thức | Kết quả |
+|---|---|---|---|---|
+| 1 | Đăng nhập Admin | `/auth/login` | POST | Thành công, nhận JWT Token |
+| 2 | Đăng nhập Giảng viên | `/auth/login` | POST | Thành công, nhận JWT Token |
+| 3 | Đăng nhập Sinh viên | `/auth/login` | POST | Thành công, nhận JWT Token |
+| 4 | Giảng viên gửi yêu cầu phê duyệt | `/approvals` | POST | Đề xuất bài tập sum-two-numbers chờ duyệt |
+| 5 | Admin xem danh sách chờ duyệt | `/approvals` | GET | Lấy thành công danh sách pending |
+| 6 | Admin phê duyệt bài tập | `/approvals/:id` | PUT | Duyệt thành công, ghi feedback phản hồi |
+| 7 | Tạo ca thực hành mới | `/sessions` | POST | Tạo ca thành công kèm thời gian mở/đóng |
+| 8 | Giảng viên gán 3 câu trắc nghiệm | `/sessions/:id/mcqs/assign` | POST | Gán q1, q2, q3 thành công vào ca |
+| 9 | Sinh viên lấy đề trắc nghiệm | `/sessions/:id/mcqs` | GET | Lấy đề thành công (gồm 3 câu hỏi) |
+| 10 | Sinh viên nộp trắc nghiệm | `/sessions/:id/mcqs/submit` | POST | Đúng 2/3 câu (67 điểm) - Chấm điểm tự động ở Server |
+| 11 | Sinh viên tải lại đáp án đã lưu | `/sessions/:id/mcqs/answers` | GET | Khôi phục chính xác các câu đã tích khi reload |
 
 ---
 
-## 📂 6. Đồng Bộ Hóa Tài Liệu Workspace Vật Lý
-Theo đúng quy tắc của dự án, hai tệp Artifact động đã được đồng bộ vào thư mục vật lý tương ứng:
-- `task.md` -> [Document/07_Scratchpads/task.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/07_Scratchpads/task.md)
-- `walkthrough.md` -> [Document/05_Walkthroughs_Reports/walkthrough.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/05_Walkthroughs_Reports/walkthrough.md)
-- Phân tích thiết kế giải thuật -> [Khao_sat_va_Thiet_ke_Lab_Lap_Trinh.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/08_Lab_Data/Khao_sat_va_Thiet_ke_Lab_Lap_Trinh.md)
-- Lịch sử tiến độ dự án -> [PROJECT_FLOW.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/PROJECT_FLOW.md)
+## 2. Các tệp đã thay đổi và tạo mới (Giai đoạn 9)
+
+### 2.1 Backend (`project/backend`)
+- **[MODIFY]** [DatabaseService.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/services/DatabaseService.ts): 
+  - Khởi tạo các bảng SQLite `mcq_questions`, `session_mcqs`, `student_mcq_answers`, và `approval_requests`.
+  - Thực hiện seed 3 câu hỏi trắc nghiệm mẫu của môn Giải thuật.
+  - Xây dựng các phương thức lưu đáp án, tự động chấm điểm trắc nghiệm, và phê duyệt bài lab.
+- **[MODIFY]** [index.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/src/index.ts): Đăng ký các endpoints:
+  - `GET /mcqs` và `POST /mcqs`
+  - `GET /sessions/:id/mcqs`
+  - `POST /sessions/:id/mcqs/assign`
+  - `POST /sessions/:id/mcqs/submit` (Tự động chấm điểm trắc nghiệm)
+  - `GET /sessions/:id/mcqs/answers` (Tải câu trả lời đã lưu)
+  - `GET /approvals` và `PUT /approvals/:id` (Duyệt/từ chối của Admin)
+  - Phát tín hiệu `session:plagiarism` qua Socket.IO khi quét sao chép xong.
+- **[NEW]** [test_mcq_approvals.js](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/test_mcq_approvals.js): Kịch bản tự động kiểm thử toàn bộ luồng của Giai đoạn 9.
+
+### 2.2 Frontend (`project/frontend`)
+- **[MODIFY]** [api.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/lib/api.ts): Khai báo các API helpers cho MCQ và approvals.
+- **[NEW]** [approvals/page.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/[locale]/approvals/page.tsx): Trang phê duyệt dành riêng cho Admin: hiển thị danh sách bài lab chờ duyệt, cho phép Admin xem thông tin, duyệt/từ chối và nhập lời phản hồi trực tiếp.
+- **[MODIFY]** [app-sidebar.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/components/app-sidebar.tsx): Tích hợp nhóm menu **"Quản trị hệ thống"** (chỉ hiển thị với tài khoản `admin`) chứa liên kết đến trang Phê duyệt bài thực hành.
+- **[MODIFY]** [lab-browser-content.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/[locale]/labs/lab-browser-content.tsx): Tích hợp Tab trắc nghiệm trên giao diện của sinh viên: Hiển thị danh sách câu hỏi trắc nghiệm, tích chọn phương án và tự động lưu đáp án, tính điểm tự động.
+- **[MODIFY]** [vi.json](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/messages/vi.json) & [en.json](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/messages/en.json): Bổ sung các bản dịch ngôn ngữ tương ứng.

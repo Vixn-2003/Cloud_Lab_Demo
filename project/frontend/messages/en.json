@@ -15,7 +15,14 @@
     "terminal": "Test Terminal",
     "support": "Support",
     "helpCenter": "Help Center",
-    "settings": "Settings"
+    "settings": "Settings",
+    "instructorPanel": "Instructor Area",
+    "sessions": "Session Management",
+    "createSession": "Create Practice Session",
+    "monitoring": "Exam Monitoring",
+    "grading": "Manual Grading",
+    "plagiarism": "Plagiarism Control",
+    "approvals": "Exercise Approvals"
   },
   "dashboard": {
     "greeting": {
@@ -287,7 +294,32 @@
     "score": "Score",
     "of": "of",
     "student": "Student",
+    "instructor": "Instructor",
+    "admin": "Admin",
     "learningMode": "Learning Mode"
+  },
+  "auth": {
+    "loginTitle": "System Login",
+    "loginSubtitle": "Enter your credentials to continue with practice labs",
+    "brandSubtitle": "Next-Gen InfoSec Practice & Exam Platform",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Login",
+    "submitting": "Logging in...",
+    "invalidCredentials": "Incorrect username or password.",
+    "loginSuccess": "Login Successful",
+    "welcomeBack": "Welcome back",
+    "loginFailed": "Login Failed",
+    "serverError": "Server connection error.",
+    "orDemoWith": "Or quick-test with demo account",
+    "student": "Student",
+    "instructor": "Instructor",
+    "admin": "Admin",
+    "filledAccount": "Filled {role} credentials",
+    "ssoLogin": "Sign in with Office 365 (SSO)",
+    "ssoConfigRequired": "SSO Login is not configured for this domain yet. Please confirm with administrator.",
+    "fillAllFields": "Please fill in both username and password.",
+    "logout": "Log Out"
   },
   "breadcrumb": {
     "home": "Home",
@@ -296,7 +328,8 @@
     "settings": "Settings",
     "workspace": "Workspace",
     "terminal": "Terminal",
-    "result": "Result"
+    "result": "Result",
+    "login": "Login"
   },
   "languageSwitcher": {
     "label": "Language",

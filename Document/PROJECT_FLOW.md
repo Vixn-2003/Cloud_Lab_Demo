@@ -60,21 +60,22 @@ Demo_Platform/
 │   ├── SRS.md                       ← Đặc tả yêu cầu phần mềm
 │   ├── SKILL_production_IDE_v2.md   ← Skill/blueprint kiến trúc production
 │   └── deep-research-report.md      ← Báo cáo nghiên cứu sâu
-└── project/
-    ├── backend/                     ← Node.js + Express + TypeScript
-    │   └── src/
-    │       ├── index.ts             ← Entry point, định nghĩa API routes
-    │       ├── models/
-    │       │   ├── types.ts         ← TypeScript interfaces
-    │       │   └── AcademyRegistry.ts ← Faculty, Subject, Lab configs
-    │       └── services/
-    │           ├── ExecutionService.ts  ← Interface (abstraction layer)
-    │           └── LocalProcessRunner.ts ← Impl: child_process runner
-    └── frontend/                    ← React + Vite + Tailwind v4 + Monaco
-        └── src/
-            ├── App.tsx              ← Toàn bộ UI logic
-            ├── index.css            ← Tailwind v4 import
-            └── main.tsx             ← React entry point
+├── project/                         ← Monorepo Workspaces
+│   ├── backend/                     ← Workspace @cloudlab/backend (Node.js + Express + TS)
+│   │   └── src/
+│   │       ├── index.ts             ← Entry point, định nghĩa API routes
+│   │       ├── models/
+│   │       │   ├── types.ts         ← TypeScript interfaces
+│   │       │   └── AcademyRegistry.ts ← Faculty, Subject, Lab configs
+│   │       └── services/
+│   │           ├── ExecutionService.ts  ← Interface (abstraction layer)
+│   │           └── LocalProcessRunner.ts ← Impl: child_process runner
+│   └── frontend/                    ← Workspace @cloudlab/frontend (Next.js 16 + shadcn/ui)
+│       └── app/                     ← Next.js App Router
+├── package.json                     ← Root package.json điều phối Monorepo
+├── pnpm-workspace.yaml              ← Định nghĩa các workspace của pnpm
+├── turbo.json                       ← Cấu hình pipeline của Turborepo
+└── pnpm-lock.yaml                   ← Tệp khóa dependencies chung duy nhất
 ```
 
 ---
@@ -83,7 +84,8 @@ Demo_Platform/
 
 | Layer | Công nghệ |
 |---|---|
-| Frontend | React 19, Vite 8, Tailwind CSS v4, Monaco Editor |
+| Monorepo Orchestration | **pnpm Workspaces** + **Turborepo** (`turbo`) |
+| Frontend | React 19, Next.js 16 (App Router), Tailwind CSS v4, Monaco Editor, Xterm.js |
 | Backend | Node.js, Express 5, TypeScript 6, ts-node-dev |
 | Runner | `child_process` (LocalProcessRunner) |
 | Storage | **SQLite** (`better-sqlite3`) — `lab_platform.db` |
@@ -258,26 +260,202 @@ CREATE TABLE submissions (
 
 ### Phiên 17 — Hướng Dẫn Thiết Lập Môi Trường Nhà Phát Triển Mới (Developer Setup Spec)
 - [x] **Biên soạn tài liệu Setup chi tiết**: Tạo mới tệp [DEVELOPER_SETUP_GUIDE.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/06_Onboarding_Team/DEVELOPER_SETUP_GUIDE.md) hướng dẫn toàn diện cấu hình môi trường phát triển cục bộ.
-- [x] **Hướng dẫn chi tiết cài đặt Node.js**: Cập nhật mục Prerequisites trong tệp đặc tả, mô tả chi tiết 3 phương pháp tải và cài đặt Node.js (tải trực tiếp LTS từ Website, cài đặt qua Node Version Manager `nvm`, hoặc cài bằng Command Line `winget`/`brew`/`apt`) và các lệnh kiểm thử phiên bản `node -v` / `npm -v`.
-- [x] **Cấu hình mạng isolated**: Hướng dẫn nhà phát triển cách tạo mạng Docker `isolated` bằng CLI để đáp ứng tính năng bảo mật định tuyến mạng trong container.
-- [x] **Tự động hóa pipeline dựng Docker Images**: Xây dựng kịch bản tự động hóa [build_images.sh](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/docker/build_images.sh) và [build_images.ps1](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/backend/docker/build_images.ps1) giúp tự động pull 5 base images và tự build image `malware-env:latest` cục bộ chỉ trong 1 click.
-- [x] **Giải trình kiến trúc cơ sở dữ liệu**: Tạo mới tệp đặc tả [DATABASE_CHOICE_EXPLANATION.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/DATABASE_CHOICE_EXPLANATION.md) làm rõ vai trò của SQLite (Platform Dev) và MySQL/Postgres (Production & Student Labs).
+- [x] **Hướng dẫn chi tiết cài đặt Node.js**: Cập nhật mục Prerequisites trong t�- [x] **Thiết kế JWT & Middleware tự trị**:
+  - Phát triển `AuthService.ts` mã hóa mật khẩu qua `crypto` và ký/giải mã JWT token không phụ thuộc npm bên ngoài.
+  - Xây dựng middleware xác thực và phân quyền. Hỗ trợ cơ chế tương thích ngược (fallback default student) để không phá vỡ các script test CLI.
+- [x] **Cấu hình Quản lý Trạng thái & API**:
+  - Tích hợp Zustand store `auth-store.ts` quản lý token, user, đồng bộ cookie và tự động chèn Authorization header trong `api.ts`.
+- [x] **Giao diện Đăng nhập Glassmorphism**:
+  - Thiết kế trang Login (`/login`) giao diện Glassmorphism cực đẹp kèm Credential Helper giúp điền nhanh tài khoản test.
+  - Tích hợp `AuthGuard` bảo vệ định tuyến và `LayoutContent` ẩn sidebar/header khi ở trang login.
+- [x] **Trang quản lý Giảng viên Mockup**:
+  - Xây dựng các trang mockup cho `/sessions`, `/monitoring`, `/grading`, `/plagiarism` ngăn lỗi 404 và vạch lộ trình rõ ràng.
+- [x] **Biên dịch & Kiểm thử thành công**:
+  - Toàn bộ monorepo build thành công 100%. Viết script và chạy test thành công 7/7 ca kiểm thử xác thực API.
+
+### Phiên 20 — Học vụ mở rộng & Quản lý Ca thực hành (Giai đoạn 7 - Hoàn thành)
+- [x] **Cơ sở dữ liệu học vụ mới**:
+  - Thiết kế và tự động tạo các bảng SQLite: `semesters`, `classes`, `class_members`, `practice_sessions`, `session_labs`, `session_participants`, `session_instructors`.
+  - Tự động chạy migration nâng cấp bảng `submissions` thêm cột `session_id`.
+  - Hỗ trợ transaction dọn dẹp submissions khi xóa ca thực hành.
+  - Seed dữ liệu học kỳ, lớp và ca thực hành hoạt động mẫu (`session-1`) sẵn sàng chạy thử nghiệm.
+- [x] **Endpoints API CRUD**:
+  - Đăng ký các endpoints CRUD học kỳ `/semesters`, lớp học `/classes`, và ca thi `/sessions` bảo vệ qua JWT.
+  - Xây dựng endpoint `/sessions/:id/import` để import sinh viên từ CSV và `/sessions/active` lấy ca thi đang diễn ra của sinh viên.
+- [x] **Giao diện Giảng viên (Inspiration: next-shadcn-dashboard-starter)**:
+  - Thiết kế trang `/sessions` hiển thị bảng thống kê ca thi, danh sách ca thi kèm theo Badge màu sắc trạng thái.
+  - Tạo component form `SessionForm` chia 4 Tabs cấu hình: thông tin chung, quy tắc/điểm phạt, gán bài lab của môn học, và dán import sinh viên hàng loạt từ CSV.
+- [x] **Khóa cứng Học trình và Đếm ngược**:
+  - Cập nhật trang `/labs` của sinh viên tự động khóa cứng, chỉ hiển thị bài lab được gán cho ca thi active và hiển thị biểu ngữ đếm ngược.
+  - Workspace tự động đính kèm `sessionId` khi nộp bài thi và hiển thị Countdown Timer đếm ngược trên Header.
+- [x] **Biên dịch & Kiểm thử thành công**:
+  - Monorepo compile thành công 100%. Chạy script tích hợp tự động `test_session_flow.js` vượt qua 7/7 ca kiểm thử thành công.
+
+### Phiên 21 — Giám sát, Chấm thủ công & Chống gian lận (Giai đoạn 8 - Hoàn thành)
+- [x] **Cơ sở dữ liệu & Chống sao chép**:
+  - Nâng cấp schema của bảng `submissions` thêm cột `result_code` và `graded_by`.
+  - Thiết kế bảng `plagiarism_cases` lưu các ca trùng mã nguồn.
+  - Triển khai dịch vụ `PlagiarismService` chứa thuật toán **Cosine Similarity of Token Frequencies** trích xuất từ tố sau khi lọc comments/string literals.
+- [x] **Endpoints API nâng cao**:
+  - `GET /sessions/:id/monitoring-data` lấy thông tin thời gian thực.
+  - `POST /sessions/:id/plagiarism/scan` và `GET /sessions/:id/plagiarism/cases` quét sao chép.
+  - `PUT /plagiarism/cases/:caseId` duyệt vụ gian lận (Confirmed/Dismissed).
+  - `POST /submissions/:id/grade` cho giảng viên chấm điểm thủ công.
+  - `GET /sessions/:id/leaderboard` tính điểm ICPC và áp dụng cơ chế đóng băng bảng điểm cho học sinh.
+- [x] **Giao diện Giảng viên**:
+  - Hoàn thiện trang Giám sát phòng máy `/monitoring` hiển thị máy trạm sinh viên, IP, Hostname, cảnh báo dùng chung IP và xuất CSV.
+  - Hoàn thiện trang Chấm điểm thủ công `/grading` hiển thị hàng chờ, hỗ trợ Code Viewer và Form ghi điểm/nhận xét.
+  - Hoàn thiện trang `/plagiarism` hỗ trợ quét sao chép và **Trình đối chiếu mã nguồn song song (Side-by-side Diff View)**.
+- [x] **Giao diện Sinh viên & ICPC Leaderboard**:
+  - Thêm nút "Bảng xếp hạng" trên biểu ngữ ca thi, hiển thị xếp hạng ICPC kèm thông báo trạng thái đóng băng bảng xếp hạng.
+- [x] **Kiểm thử thành công**:
+  - Biên dịch monorepo thành công 100%. Script kiểm thử tự động `test_anticheat_grading.js` đạt kết quả tối đa 10/10 ca **PASS ✅**.
+
+### Phiên 22 — MCQ & Quy trình phê duyệt nâng cao (Giai đoạn 9 - Hoàn thành)
+- [x] **Cơ sở dữ liệu trắc nghiệm & Phê duyệt**:
+  - Tạo các bảng SQLite: `mcq_questions`, `session_mcqs`, `student_mcq_answers`, và `approval_requests`.
+  - Thực hiện seed 3 câu hỏi trắc nghiệm mẫu của môn Giải thuật.
+- [x] **Endpoints API nâng cao**:
+  - API MCQ: `GET /mcqs`, `POST /mcqs`, `GET /sessions/:id/mcqs`, `POST /sessions/:id/mcqs/assign`, `POST /sessions/:id/mcqs/submit`, và `GET /sessions/:id/mcqs/answers`.
+  - API Phê duyệt bài thực hành: `GET /approvals`, `POST /approvals`, và `PUT /approvals/:id`.
+  - Phát tín hiệu thời gian thực qua Socket.IO khi có sự thay đổi ca thi hoặc cảnh báo Plagiarism.
+- [x] **Giao diện Quản lý Admin**:
+  - Thiết kế trang Phê duyệt bài tập `/approvals` dành riêng cho Admin để xem nội dung đề xuất, duyệt/từ chối đề xuất và nhập lời nhận xét.
+  - Tích hợp mục "Quản trị hệ thống" (Phê duyệt bài tập) vào Sidebar chỉ dành cho Admin.
+- [x] **Giao diện Sinh viên làm trắc nghiệm**:
+  - Tích hợp tab **"Phần Trắc nghiệm"** trong phòng thi của sinh viên khi ca thi có gán câu hỏi trắc nghiệm.
+  - Hỗ trợ làm bài trắc nghiệm trực quan và tự động lưu đáp án, chấm điểm trắc nghiệm tự động tại Server.
+- [x] **Kiểm thử thành công**:
+  - Biên dịch monorepo thành công 100%. Script kiểm thử tích hợp tự động `test_mcq_approvals.js` đạt kết quả 11/11 ca **PASS ✅**.
+
+## 🚧 Backlog / Việc tiếp theo (Bảo trì & Tối ưu hóa)�� dữ liệu**: Tạo mới tệp đặc tả [DATABASE_CHOICE_EXPLANATION.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/02_Architecture_Design/DATABASE_CHOICE_EXPLANATION.md) làm rõ vai trò của SQLite (Platform Dev) và MySQL/Postgres (Production & Student Labs).
 - [x] **Đăng ký tài liệu Setup**: Đăng ký và liên kết tệp hướng dẫn thiết lập mới vào danh mục [Document/README.md](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/Document/README.md).
 
-## 🚧 Backlog / Việc tiếp theo (Giai đoạn 4 & 5)
+### Phiên 18 — Cấu Hình pnpm Monorepo & Turborepo (Developer Workflow Optimization)
+- [x] **Thiết lập cấu hình Monorepo gốc**: Tạo `pnpm-workspace.yaml`, `package.json` và `turbo.json` ở gốc để điều phối backend (`@cloudlab/backend`) và frontend (`@cloudlab/frontend`).
+- [x] **Đồng bộ hóa dependencies qua pnpm**: Dọn dẹp các tệp khóa `package-lock.json` cũ và cài đặt toàn bộ package qua một tệp khóa chung duy nhất `pnpm-lock.yaml`.
+- [x] **Xác minh quy trình Build/Dev song song**:
+  - Chạy `pnpm build` biên dịch song song toàn bộ dự án qua Turborepo thành công không lỗi trong **24.9s**.
+  - Chạy `pnpm dev` khởi chạy đồng thời dev servers của frontend (`http://localhost:3000`) và backend (`http://localhost:3001`).
+- [x] **Cập nhật tài liệu kỹ thuật & Đồng bộ vật lý**: Cập nhật `PROJECT_FLOW.md`, `README.md`, đồng bộ `task.md` và `walkthrough.md` vào thư mục `Document/`.
 
-### Giai đoạn 4: Hoàn thiện tính năng lõi
-- [ ] **Submission History UI**: Tab xem lịch sử nộp bài của bản thân.
-- [ ] **Multi-file labs**: Hỗ trợ lab có nhiều file source.
-- [ ] **Auth Layer**: Login bằng tài khoản sinh viên.
-- [ ] **Real-time logs**: Dùng WebSocket để stream stdout khi app đang chạy.
+### Phiên 19 — Auth Layer & Phân quyền RBAC (Giai đoạn 6 - Nền Móng)
+- [x] **Xác thực & Bảo mật cơ sở dữ liệu**:
+  - Tạo bảng `users` trong SQLite và seed 3 tài khoản mặc định đại diện cho 3 vai trò (`student`, `instructor`, `admin`).
+  - Chạy migration tự động bổ sung cột `user_id`, `client_ip`, `hostname` vào bảng `submissions`.
+- [x] **Thiết kế JWT & Middleware tự trị**:
+  - Phát triển `AuthService.ts` mã hóa mật khẩu qua `crypto` và ký/giải mã JWT token không phụ thuộc npm bên ngoài.
+  - Xây dựng middleware xác thực và phân quyền. Hỗ trợ cơ chế tương thích ngược (fallback default student) để không phá vỡ các- [x] **Kiểm thử thành công**:
+  - Biên dịch monorepo thành công 100%. Script kiểm thử tự động `test_anticheat_grading.js` đạt kết quả tối đa 10/10 ca **PASS ✅**.
 
-### Giai đoạn 5: Tích hợp Labtainer & Web Terminal (Kiến trúc hệ thống mới)
-- [x] **Xây dựng Frontend Web Terminal**: Tích hợp `xterm.js` để thay thế Monaco Editor cho các bài lab Mạng/Bảo mật.
-- [x] **Giao thức WebSocket (Pty-Stream)**: Mở đường truyền PTY 2 chiều từ Browser tới Backend thông qua `socket.io`.
-- [x] **Backend LabtainerRunner**: Khởi tạo `InteractiveTerminalService.ts` quản lý `child_process.spawn` kết nối với command-line (hiện tại đang dùng Host PowerShell để mock test, chuẩn bị thay thế bằng lệnh Labtainer).
-- [x] **Cơ chế Chấm điểm tự động (Auto-grade)**: Lắng nghe sự kiện `stoplab`, đọc JSON artifact từ Labtainer, parse kết quả và cập nhật Score vào SQLite.
-- [x] **Quản lý Tài nguyên (Resource Management)**: Kiểm soát timeout và dọn dẹp Docker container thừa (auto-destroy) để chống tràn RAM.
+### Phiên 22 — MCQ & Quy trình phê duyệt nâng cao (Giai đoạn 9 - Hoàn thành)
+- [x] **Cơ sở dữ liệu trắc nghiệm & Phê duyệt**:
+  - Tạo các bảng SQLite: `mcq_questions`, `session_mcqs`, `student_mcq_answers`, và `approval_requests`.
+  - Thực hiện seed 3 câu hỏi trắc nghiệm mẫu của môn Giải thuật.
+- [x] **Endpoints API nâng cao**:
+  - API MCQ: `GET /mcqs`, `POST /mcqs`, `GET /sessions/:id/mcqs`, `POST /sessions/:id/mcqs/assign`, `POST /sessions/:id/mcqs/submit`, và `GET /sessions/:id/mcqs/answers`.
+  - API Phê duyệt bài thực hành: `GET /approvals`, `POST /approvals`, và `PUT /approvals/:id`.
+  - Phát tín hiệu thời gian thực qua Socket.IO khi có sự thay đổi ca thi hoặc cảnh báo Plagiarism.
+- [x] **Giao diện Quản lý Admin**:
+  - Thiết kế trang Phê duyệt bài tập `/approvals` dành riêng cho Admin để xem nội dung đề xuất, duyệt/từ chối đề xuất và nhập lời nhận xét.
+  - Tích hợp mục "Quản trị hệ thống" (Phê duyệt bài tập) vào Sidebar chỉ dành cho Admin.
+- [x] **Giao diện Sinh viên làm trắc nghiệm**:
+  - Tích hợp tab **"Phần Trắc nghiệm"** trong phòng thi của sinh viên khi ca thi có gán câu hỏi trắc nghiệm.
+  - Hỗ trợ làm bài trắc nghiệm trực quan và tự động lưu đáp án, chấm điểm trắc nghiệm tự động tại Server.
+- [x] **Kiểm thử thành công**:
+  - Biên dịch monorepo thành công 100%. Script kiểm thử tích hợp tự động `test_mcq_approvals.js` đạt kết quả 11/11 ca **PASS ✅**.
+
+## 🚧 Backlog / Việc tiếp theo (Bảo trì & Tối ưu hóa)
+
+### Giai đoạn 6 (Đã hoàn thành) — Auth Layer & Phân quyền
+- [x] Thiết kế bảng `users` + JWT/session-based auth (Express middleware).
+- [x] API: `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`.
+- [x] Middleware `requireRole(['instructor','admin'])` bảo vệ các route quản trị.
+- [x] Frontend: trang Login, lưu token, route guard theo role.
+- [x] Migration: gắn `user_id` vào `submissions` hiện có.
+- [x] Viết tài liệu `Document/02_Architecture_Design/AUTH_RBAC_SPEC.md`.
+
+### Giai đoạn 7 (Đã hoàn thành) — Học vụ mở rộng & Quản lý Ca thực hành (Core nghiệp vụ giảng viên)
+- [x] Chọn 1 admin dashboard template/UI kit có sẵn tương thích Next.js 16 + shadcn/ui.
+- [x] Bảng `semesters`, `classes`, `class_members` + API CRUD.
+- [x] Bảng `practice_sessions`, `session_labs`, `session_participants`, `session_instructors`.
+- [x] Trang "Quản lý Ca thực hành" (giảng viên): danh sách ca, CRUD, export.
+- [x] Trang "Tạo/Sửa Ca thực hành" form: tên, banner, địa điểm, thời gian, lớp/tổ, cho phép trình duyệt, penalty...
+- [x] Import danh sách sinh viên (CSV/Excel) vào `session_participants`.
+- [x] Gán bài tập cho ca và Phân công giảng viên (owner/proctor).
+- [x] Sinh viên: trang "Ca thực hành của tôi" thay vì duyệt tự do toàn bộ Lab Bank khi đang trong 1 ca active.
+- [x] Viết `Document/02_Architecture_Design/SESSION_MANAGEMENT_SPEC.md`.
+
+### Giai đoạn 8 (Đã hoàn thành) — Giám sát, Chấm thủ công & Chống gian lận
+- [x] Mở rộng `submissions` với `result_code` (AC/WA/WF/WFN/CPY), `client_ip`, `hostname`, `graded_by`.
+- [x] Trang giảng viên "Trạng thái giải bài" (Online Judge view): theo dõi từng lượt nộp theo thời gian/tài khoản/bài.
+- [x] Trang giảng viên "Giám sát Ca đang diễn ra": bảng sinh viên với IP, tên máy, phòng thi, đề số, trạng thái.
+- [x] Chức năng Chấm thủ công: hàng chờ bài nộp manual, giao diện nhập điểm/nhận xét.
+- [x] Phát hiện sao chép cơ bản: so khớp độ tương đồng văn bản/mã nguồn giữa các bài nộp cùng lab trong ca.
+- [x] Trang Bảng xếp hạng nâng cao (leaderboard): cấu hình đóng băng theo `freeze_before_end_minutes`.
+- [x] Xuất dữ liệu: export CSV/Excel cho danh sách sinh viên, kết quả, lịch sử nộp.
+- [x] Viết `Document/02_Architecture_Design/GRADING_ANTICHEAT_SPEC.md`.
+
+### Giai đoạn 9 (Đã hoàn thành) — MCQ & Workflow phê duyệt nâng cao
+- [x] Ngân hàng câu hỏi trắc nghiệm (MCQ) độc lập với Lab code.
+- [x] Workflow phê duyệt bài tập (người gửi → duyệt/từ chối).
+- [x] Thông báo real-time (Socket.IO) khi có bài bị flag CPY hoặc ca sắp đóng băng.po compile thành công 100%. Chạy script tích hợp tự động `test_session_flow.js` vượt qua 7/7 ca kiểm thử thành công.
+
+### Phiên 21 — Giám sát, Chấm thủ công & Chống gian lận (Giai đoạn 8 - Hoàn thành)
+- [x] **Cơ sở dữ liệu & Chống sao chép**:
+  - Nâng cấp schema của bảng `submissions` thêm cột `result_code` và `graded_by`.
+  - Thiết kế bảng `plagiarism_cases` lưu các ca trùng mã nguồn.
+  - Triển khai dịch vụ `PlagiarismService` chứa thuật toán **Cosine Similarity of Token Frequencies** trích xuất từ tố sau khi lọc comments/string literals.
+- [x] **Endpoints API nâng cao**:
+  - `GET /sessions/:id/monitoring-data` lấy thông tin thời gian thực.
+  - `POST /sessions/:id/plagiarism/scan` và `GET /sessions/:id/plagiarism/cases` quét sao chép.
+  - `PUT /plagiarism/cases/:caseId` duyệt vụ gian lận (Confirmed/Dismissed).
+  - `POST /submissions/:id/grade` cho giảng viên chấm điểm thủ công.
+  - `GET /sessions/:id/leaderboard` tính điểm ICPC và áp dụng cơ chế đóng băng bảng điểm cho học sinh.
+- [x] **Giao diện Giảng viên**:
+  - Hoàn thiện trang Giám sát phòng máy `/monitoring` hiển thị máy trạm sinh viên, IP, Hostname, cảnh báo dùng chung IP và xuất CSV.
+  - Hoàn thiện trang Chấm điểm thủ công `/grading` hiển thị hàng chờ, hỗ trợ Code Viewer và Form ghi điểm/nhận xét.
+  - Hoàn thiện trang `/plagiarism` hỗ trợ quét sao chép và **Trình đối chiếu mã nguồn song song (Side-by-side Diff View)**.
+- [x] **Giao diện Sinh viên & ICPC Leaderboard**:
+  - Thêm nút "Bảng xếp hạng" trên biểu ngữ ca thi, hiển thị xếp hạng ICPC kèm thông báo trạng thái đóng băng bảng xếp hạng.
+- [x] **Kiểm thử thành công**:
+  - Biên dịch monorepo thành công 100%. Script kiểm thử tự động `test_anticheat_grading.js` đạt kết quả tối đa 10/10 ca **PASS ✅**.
+
+## 🚧 Backlog / Việc tiếp theo (Giai đoạn 9)
+
+### Giai đoạn 6 (Đã hoàn thành) — Auth Layer & Phân quyền
+- [x] Thiết kế bảng `users` + JWT/session-based auth (Express middleware).
+- [x] API: `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`.
+- [x] Middleware `requireRole(['instructor','admin'])` bảo vệ các route quản trị.
+- [x] Frontend: trang Login, lưu token, route guard theo role.
+- [x] Migration: gắn `user_id` vào `submissions` hiện có.
+- [x] Viết tài liệu `Document/02_Architecture_Design/AUTH_RBAC_SPEC.md`.
+
+### Giai đoạn 7 (Đã hoàn thành) — Học vụ mở rộng & Quản lý Ca thực hành (Core nghiệp vụ giảng viên)
+- [x] Chọn 1 admin dashboard template/UI kit có sẵn tương thích Next.js 16 + shadcn/ui.
+- [x] Bảng `semesters`, `classes`, `class_members` + API CRUD.
+- [x] Bảng `practice_sessions`, `session_labs`, `session_participants`, `session_instructors`.
+- [x] Trang "Quản lý Ca thực hành" (giảng viên): danh sách ca, CRUD, export.
+- [x] Trang "Tạo/Sửa Ca thực hành" form: tên, banner, địa điểm, thời gian, lớp/tổ, cho phép trình duyệt, penalty...
+- [x] Import danh sách sinh viên (CSV/Excel) vào `session_participants`.
+- [x] Gán bài tập cho ca và Phân công giảng viên (owner/proctor).
+- [x] Sinh viên: trang "Ca thực hành của tôi" thay vì duyệt tự do toàn bộ Lab Bank khi đang trong 1 ca active.
+- [x] Viết `Document/02_Architecture_Design/SESSION_MANAGEMENT_SPEC.md`.
+
+### Giai đoạn 8 (Đã hoàn thành) — Giám sát, Chấm thủ công & Chống gian lận
+- [x] Mở rộng `submissions` với `result_code` (AC/WA/WF/WFN/CPY), `client_ip`, `hostname`, `graded_by`.
+- [x] Trang giảng viên "Trạng thái giải bài" (Online Judge view): theo dõi từng lượt nộp theo thời gian/tài khoản/bài.
+- [x] Trang giảng viên "Giám sát Ca đang diễn ra": bảng sinh viên với IP, tên máy, phòng thi, đề số, trạng thái.
+- [x] Chức năng Chấm thủ công: hàng chờ bài nộp manual, giao diện nhập điểm/nhận xét.
+- [x] Phát hiện sao chép cơ bản: so khớp độ tương đồng văn bản/mã nguồn giữa các bài nộp cùng lab trong ca.
+- [x] Trang Bảng xếp hạng nâng cao (leaderboard): cấu hình đóng băng theo `freeze_before_end_minutes`.
+- [x] Xuất dữ liệu: export CSV/Excel cho danh sách sinh viên, kết quả, lịch sử nộp.
+- [x] Viết `Document/02_Architecture_Design/GRADING_ANTICHEAT_SPEC.md`.
+
+### Giai đoạn 9 (Tùy chọn) — MCQ & Workflow phê duyệt nâng cao
+- [ ] Ngân hàng câu hỏi trắc nghiệm (MCQ) độc lập với Lab code.
+- [ ] Workflow phê duyệt bài tập (người gửi → duyệt/từ chối).
+- [ ] Thông báo real-time (Socket.IO) khi có bài bị flag CPY hoặc ca sắp đóng băng.
 
 ---
 
@@ -291,16 +469,17 @@ CREATE TABLE submissions (
 
 ## 🚀 Cách khởi động
 
-```bash
-# Backend (Terminal 1)
-cd project/backend
-npm install
-npm run dev       # → http://localhost:3001
+Sau khi chuyển đổi sang Monorepo, bạn chỉ cần làm việc tại thư mục gốc của dự án:
 
-# Frontend (Terminal 2)
-cd project/frontend
-npm install
-npm run dev       # → http://localhost:5173
+```bash
+# 1. Cài đặt dependencies toàn cục
+pnpm install
+
+# 2. Khởi chạy dev server song song (Frontend: 3000, Backend: 3001)
+pnpm dev
+
+# 3. Build toàn bộ dự án
+pnpm build
 ```
 
 ## 🧪 Test solution mẫu (Reference Solutions)

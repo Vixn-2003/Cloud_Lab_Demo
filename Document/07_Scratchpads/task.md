@@ -1,13 +1,21 @@
-# Checklist Thực Thi: Xây Dựng & Kiểm Thử 7 Bài Toán Lập Trình Mới
+# Task list: Giai đoạn 9 — MCQ & Workflow phê duyệt nâng cao
 
-- `[x]` Đăng ký 7 bài toán lập trình mới vào tệp `ProblemRegistry.ts` (subjectId: `algos`)
-- `[x]` Phát triển bộ mã nguồn mẫu (Reference Solutions) bằng Python cho cả 7 bài toán
-- `[x]` Viết script kiểm thử tự động `test_new_programming_labs.js` để gửi lời giải và chấm điểm thông qua hệ thống
-- `[x]` Chạy script kiểm thử để đảm bảo cả 7 bài lab đều đạt điểm tuyệt đối 100%
-- `[x]` Tạo tài liệu thiết kế giải thuật `Document/08_Lab_Data/Khao_sat_va_Thiet_ke_Lab_Lap_Trinh.md`
-- `[x]` Sửa lỗi trống Console Output khi Chạy thử (Run Code) trên Frontend do race condition
-- `[x]` Sửa lỗi hiển thị đuôi file ở Workspace Editor (`Main.sh` thành `Main.py`) bằng cách bổ sung trường `extension` vào API `/profiles/:id`
-- `[x]` Triển khai tách biệt Ví dụ mẫu (Examples) & Bộ testcases (Testcases) ẩn, tích hợp khu vực hiển thị Ví dụ trực quan kèm nút bấm "Dùng làm Custom Input"
-- `[x]` Sửa lỗi cảnh báo ENVIRONMENT_FALLBACK của next-intl trên console bằng cách tích hợp hook useNow()
-- `[x]` Cập nhật lịch sử phiên làm việc trong `Document/PROJECT_FLOW.md`
-- `[x]` Sao chép các tệp Artifact động (`task.md` và `walkthrough.md`) vào thư mục workspace vật lý để lưu trữ vĩnh viễn
+- [ ] **Phần 1: Cấu trúc Cơ sở dữ liệu MCQ & Approvals (Backend)**
+  - [ ] Khởi tạo các bảng SQLite `mcq_questions`, `session_mcqs`, `student_mcq_answers`, và `approval_requests` trong `DatabaseService.ts`.
+  - [ ] Seed các câu hỏi trắc nghiệm MCQ mẫu cho môn học Cấu trúc dữ liệu & Giải thuật.
+  - [ ] Triển khai các hàm truy vấn gán/nộp bài trắc nghiệm và phê duyệt bài lab trong `DatabaseService.ts`.
+- [ ] **Phần 2: Tích hợp API MCQ, Approvals & Socket.IO (Backend)**
+  - [ ] Đăng ký các endpoints CRUD câu hỏi trắc nghiệm (`/mcqs`, `/sessions/:id/mcqs`, `/sessions/:id/mcqs/submit`).
+  - [ ] Đăng ký các endpoints phê duyệt bài thực hành của Admin (`/approvals`, `/approvals/:id`).
+  - [ ] Tích hợp phát tín hiệu Socket.IO thời gian thực cảnh báo sao chép và đóng băng/hết giờ ca thi.
+- [ ] **Phần 3: Giao diện Phê duyệt của Admin & Tích hợp API Frontend**
+  - [ ] Thêm các khai báo gọi API cho MCQ và Approval Workflow trong `api.ts`.
+  - [ ] Xây dựng màn hình phê duyệt bài tập dành cho Admin `/approvals/page.tsx` hỗ trợ xem mô tả, duyệt và viết phản hồi.
+- [ ] **Phần 4: Giao diện Làm bài Trắc nghiệm MCQ của Sinh viên (Frontend)**
+  - [ ] Cập nhật màn hình phòng thi `lab-browser-content.tsx` tích hợp thêm tab Làm bài Trắc nghiệm (hiển thị câu hỏi, đáp án, và tự động nộp bài khi sinh viên chọn).
+  - [ ] Bổ sung các bản dịch ngôn ngữ tương ứng trong `vi.json` và `en.json`.
+- [ ] **Phần 5: Kiểm thử, Viết Tài liệu & Hoàn thiện**
+  - [ ] Kiểm tra build dự án (`pnpm build`).
+  - [ ] Viết và chạy script kiểm thử tích hợp tự động `test_mcq_approvals.js`.
+  - [ ] Viết tài liệu `Document/02_Architecture_Design/MCQ_APPROVAL_SPEC.md`.
+  - [ ] Cập nhật `Document/PROJECT_FLOW.md` và đồng bộ `task.md` / `walkthrough.md`.

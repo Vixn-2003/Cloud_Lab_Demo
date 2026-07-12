@@ -50,7 +50,7 @@ import { CodeEditor } from '@/components/code-editor';
 import { ConsoleOutput } from '@/components/console-output';
 import { FileUploadZone } from '@/components/file-upload-zone';
 import { useAppStore } from '@/lib/store';
-import { getLab, getProfile, getSubmissions, runCode, submitCode, submitFile, getFaculties, getSubjects, getLabs } from '@/lib/api';
+import { getLab, getProfile, getSubmissions, runCode, submitCode, submitFile, getFaculties, getSubjects, getLabs, getActiveSession } from '@/lib/api';
 import { useSocket } from '@/hooks/use-socket';
 import { WebTerminal } from '@/components/web-terminal';
 import { LabWorkspaceSkeleton } from './lab-workspace-skeleton';
@@ -97,6 +97,10 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
   const [profile, setProfile] = useState<ExecutionProfile | null>(null);
   const [previousAttempts, setPreviousAttempts] = useState<Attempt[]>([]);
 
+  // Active Session exam states
+  const [activeSession, setActiveSession] = useState<any | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>('');
+
   // Cascading selects states
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -138,7 +142,15 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
   useEffect(() => {
     async function loadData() {
       try {
-        const rawLab = await getLab(labId);
+        const [rawLab, activeSess] = await Promise.all([
+          getLab(labId),
+          getActiveSession().catch(() => null)
+        ]);
+
+        if (activeSess && activeSess.labIds?.includes(labId)) {
+          setActiveSession(activeSess);
+        }
+
         setLab(rawLab);
         
         const rawProfile = await getProfile(rawLab.profileId);
@@ -179,7 +191,29 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
       }
     }
     loadData();
-  }, [labId, getDraft, loadAttempts]);
+  }, [labId, loadAttempts, getDraft]);
+
+  // Hook for remaining exam session time
+  useEffect(() => {
+    if (!activeSession) return;
+
+    const timer = setInterval(() => {
+      const diffMs = new Date(activeSession.end_time).getTime() - new Date().getTime();
+      if (diffMs <= 0) {
+        setTimeLeft('ĐÃ HẾT GIỜ THI');
+        clearInterval(timer);
+      } else {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+        
+        const pad = (num: number) => num.toString().padStart(2, '0');
+        setTimeLeft(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeSession]);
 
   // Track last visited lab
   useEffect(() => {
@@ -383,13 +417,13 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
     setConsoleExpanded(true);
     toast.info('Running test cases...');
     try {
-      const res = await submitCode(code, profile.id, lab.id);
+      const res = await submitCode(code, profile.id, lab.id, activeSession?.id);
       subscribeToExecution(res.executionId);
     } catch (err: any) {
       setIsRunning(false);
       toast.error(`Failed to run tests: ${err.message}`);
     }
-  }, [code, profile, lab, subscribeToExecution]);
+  }, [code, profile, lab, subscribeToExecution, activeSession]);
 
   const handleSubmit = useCallback(async () => {
     if (!profile || !lab) return;
@@ -399,13 +433,13 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
     setConsoleExpanded(true);
     toast.info('Submitting solution for grading...');
     try {
-      const res = await submitCode(code, profile.id, lab.id);
+      const res = await submitCode(code, profile.id, lab.id, activeSession?.id);
       subscribeToExecution(res.executionId);
     } catch (err: any) {
       setIsSubmitting(false);
       toast.error(`Failed to submit: ${err.message}`);
     }
-  }, [code, profile, lab, subscribeToExecution]);
+  }, [code, profile, lab, subscribeToExecution, activeSession]);
 
   const handleFileSubmit = useCallback(async (file: File) => {
     if (!profile || !lab) return;
@@ -414,13 +448,13 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
     setExecutionMetadata(null);
     toast.info(`Đang nộp file "${file.name}" để chấm điểm...`);
     try {
-      const res = await submitFile(file, profile.id, lab.id);
+      const res = await submitFile(file, profile.id, lab.id, activeSession?.id);
       subscribeToExecution(res.executionId);
     } catch (err: any) {
       setIsSubmitting(false);
       toast.error(`Nộp file thất bại: ${err.message}`);
     }
-  }, [profile, lab, subscribeToExecution]);
+  }, [profile, lab, subscribeToExecution, activeSession]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -486,6 +520,12 @@ export function LabWorkspaceContent({ labId }: LabWorkspaceContentProps) {
                    lab.status === 'needs_revision' ? 'Needs Revision' :
                    lab.status === 'completed' ? 'Completed' : lab.status}
                 </Badge>
+              )}
+              {activeSession && (
+                <div className="flex items-center gap-1.5 ml-2 bg-red-950/20 border border-red-500/20 px-2 py-0.5 rounded text-red-500 font-mono text-[11px] font-bold animate-pulse">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{timeLeft}</span>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
