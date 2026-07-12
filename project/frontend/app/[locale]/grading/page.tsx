@@ -59,13 +59,11 @@ export default function GradingPage() {
 
   // Load submissions
   const loadSubmissions = async () => {
-    if (!hasAccess) return;
+    if (!hasAccess || !selectedSessionId) return;
     setLoading(true);
     try {
-      const data = await getSubmissions();
-      // Only keep submissions for the selected session
-      const filtered = data.filter((s: any) => s.sessionId === selectedSessionId || s.session_id === selectedSessionId);
-      setSubmissions(filtered);
+      const data = await getSubmissions(selectedSessionId);
+      setSubmissions(data);
     } catch (e) {
       console.error(e);
     } finally {

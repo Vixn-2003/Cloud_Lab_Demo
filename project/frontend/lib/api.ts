@@ -126,8 +126,9 @@ export async function submitFile(
 }
 
 // === Submissions ===
-export async function getSubmissions(): Promise<SubmissionRecord[]> {
-  return fetchApi<SubmissionRecord[]>('/submissions');
+export async function getSubmissions(sessionId?: string): Promise<SubmissionRecord[]> {
+  const params = sessionId ? `?sessionId=${sessionId}` : '';
+  return fetchApi<SubmissionRecord[]>(`/submissions${params}`);
 }
 
 export async function getSubmission(id: string): Promise<SubmissionRecord> {

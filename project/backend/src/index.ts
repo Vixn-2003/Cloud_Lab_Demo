@@ -47,6 +47,16 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json());
 
+// API Performance Profiling Middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    console.log(`[API Profile] ${req.method} ${req.originalUrl} - Status: ${res.statusCode} - Duration: ${duration}ms`);
+  });
+  next();
+});
+
 // WebSocket logic
 io.on("connection", (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
@@ -715,8 +725,8 @@ app.post("/submit", authenticateToken, async (req: AuthenticatedRequest, res) =>
         
         const execResult = await runner.executeSubmit(code, tc.input, profile, executionId);
         
-        const actualOutput = (execResult.stdout || "").trim();
-        const expectedOutput = tc.expectedOutput.trim();
+        const actualOutput = (execResult.stdout || "").replace(/\r\n/g, "\n").trim();
+        const expectedOutput = tc.expectedOutput.replace(/\r\n/g, "\n").trim();
         const passed = actualOutput === expectedOutput && execResult.exitCode === 0;
         if (passed) passedTests++;
 
@@ -755,7 +765,12 @@ app.post("/submit", authenticateToken, async (req: AuthenticatedRequest, res) =>
 });
 
 app.get("/submissions", authenticateToken, (req, res) => {
-  res.json(dbService.getAllSubmissions());
+  const sessionId = req.query.sessionId as string;
+  if (sessionId) {
+    res.json(dbService.getSubmissionsBySession(sessionId));
+  } else {
+    res.json(dbService.getAllSubmissions());
+  }
 });
 
 app.get("/submissions/:id", authenticateToken, (req, res) => {
@@ -863,8 +878,8 @@ app.post("/upload-submit", authenticateToken, upload.single("file"), async (req:
 
           const execResult = await runner.executeSubmit(code, tc.input, profile, executionId);
 
-          const actualOutput = (execResult.stdout || "").trim();
-          const expectedOutput = tc.expectedOutput.trim();
+          const actualOutput = (execResult.stdout || "").replace(/\r\n/g, "\n").trim();
+          const expectedOutput = tc.expectedOutput.replace(/\r\n/g, "\n").trim();
           const passed = actualOutput === expectedOutput && execResult.exitCode === 0;
           if (passed) passedTests++;
 

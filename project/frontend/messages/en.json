@@ -296,7 +296,14 @@
     "student": "Student",
     "instructor": "Instructor",
     "admin": "Admin",
-    "learningMode": "Learning Mode"
+    "learningMode": "Learning Mode",
+    "continue": "Continue",
+    "review": "Review",
+    "open": "Open",
+    "copyCode": "Copy Code",
+    "copied": "Copied!",
+    "language": "Language",
+    "logout": "Log Out"
   },
   "auth": {
     "loginTitle": "System Login",

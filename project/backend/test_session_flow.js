@@ -121,6 +121,45 @@ async function runTests() {
   if (resCreateSession.status === 201 && resCreateSession.body.id) {
     createdSessionId = resCreateSession.body.id;
     console.log(`✅ Tạo ca thi thành công. ID ca thi: ${createdSessionId}`);
+
+    // Kích hoạt ca thi (chuyển status từ draft sang active)
+    console.log('Ca 3.5: Giảng viên kích hoạt ca thi...');
+    const resUpdateSession = await request(`${BACKEND_URL}/sessions/${createdSessionId}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${instructorToken}` }
+    }, {
+      name: 'Thi học trình an toàn thông tin K21',
+      location: 'Phòng Máy 401-A2',
+      classId: 'class-1',
+      startTime,
+      endTime,
+      status: 'active',
+      allowBrowser: false,
+      freezeBeforeEndMinutes: 10,
+      penaltyMinutesPerWrongSubmit: 15,
+      submissionMode: 'auto',
+      labIds: ['sum_two_numbers'],
+      participants: [
+        {
+          username: 'student',
+          fullName: 'Sinh viên Demo',
+          studentCode: 'B21DCCN001',
+          email: 'student@student.ptit.edu.vn',
+          examRoom: 'PM-401',
+          seatIp: '192.168.1.10',
+          hostname: 'DESKTOP-PTIT-01',
+          variantCode: 'Đề số 02'
+        }
+      ],
+      instructors: []
+    });
+
+    if (resUpdateSession.status === 200) {
+      console.log('✅ Kích hoạt ca thi thành công.');
+    } else {
+      console.error('❌ Kích hoạt ca thi thất bại:', resUpdateSession.body);
+      process.exit(1);
+    }
   } else {
     console.error('❌ Tạo ca thi thất bại:', resCreateSession.body);
     process.exit(1);

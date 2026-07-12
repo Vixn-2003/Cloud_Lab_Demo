@@ -315,7 +315,9 @@
     "review": "Xem lại",
     "open": "Mở",
     "copyCode": "Sao chép code",
-    "copied": "Đã sao chép!"
+    "copied": "Đã sao chép!",
+    "language": "Ngôn ngữ",
+    "logout": "Đăng xuất"
   },
   "auth": {
     "loginTitle": "Đăng nhập hệ thống",

@@ -214,6 +214,16 @@ export class DatabaseService {
       )
     `);
 
+    // 10g. Tạo các chỉ mục tối ưu hóa hiệu năng (Performance Indexing)
+    this.db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_submissions_session_user ON submissions(session_id, user_id);
+      CREATE INDEX IF NOT EXISTS idx_submissions_created_at ON submissions(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_session_participants_user ON session_participants(user_id);
+      CREATE INDEX IF NOT EXISTS idx_student_mcq_answers_session_user ON student_mcq_answers(session_id, user_id);
+      CREATE INDEX IF NOT EXISTS idx_plagiarism_cases_session ON plagiarism_cases(session_id);
+      CREATE INDEX IF NOT EXISTS idx_approval_requests_lab ON approval_requests(lab_id);
+    `);
+
     // Seed trắc nghiệm nếu trống
     const mcqCount = this.db.prepare("SELECT COUNT(*) as count FROM mcq_questions").get() as { count: number };
     if (mcqCount.count === 0) {
@@ -475,19 +485,22 @@ export class DatabaseService {
         INSERT INTO session_participants (session_id, user_id, exam_room, seat_ip, hostname, variant_code, status)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
+      const findUser = this.db.prepare("SELECT id FROM users WHERE username = ? OR student_code = ?");
+      const insertUser = this.db.prepare(`
+        INSERT INTO users (id, username, password_hash, full_name, role, student_code, email, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
       for (const p of participants) {
         // Tìm user_id theo username hoặc mã sinh viên
-        const userRow = this.db.prepare("SELECT id FROM users WHERE username = ? OR student_code = ?").get(p.username, p.studentCode) as any;
+        const userRow = findUser.get(p.username, p.studentCode) as any;
         let userId = userRow?.id;
 
         // Nếu sinh viên chưa tồn tại, tự động tạo tài khoản sinh viên mới
         if (!userId) {
           userId = uuidv4();
           const defaultHash = AuthService.hashPassword("student123");
-          this.db.prepare(`
-            INSERT INTO users (id, username, password_hash, full_name, role, student_code, email, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          `).run(userId, p.username || `sv_${p.studentCode}`, defaultHash, p.fullName, "student", p.studentCode, p.email || null, new Date().toISOString());
+          insertUser.run(userId, p.username || `sv_${p.studentCode}`, defaultHash, p.fullName, "student", p.studentCode, p.email || null, new Date().toISOString());
         }
 
         insertParticipant.run(id, userId, p.examRoom || location, p.seatIp || null, p.hostname || null, p.variantCode || null, "not_submitted");
@@ -546,17 +559,20 @@ export class DatabaseService {
         INSERT INTO session_participants (session_id, user_id, exam_room, seat_ip, hostname, variant_code, status)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
+      const findUser = this.db.prepare("SELECT id FROM users WHERE username = ? OR student_code = ?");
+      const insertUser = this.db.prepare(`
+        INSERT INTO users (id, username, password_hash, full_name, role, student_code, email, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
       for (const p of participants) {
-        const userRow = this.db.prepare("SELECT id FROM users WHERE username = ? OR student_code = ?").get(p.username, p.studentCode) as any;
+        const userRow = findUser.get(p.username, p.studentCode) as any;
         let userId = userRow?.id;
 
         if (!userId) {
           userId = uuidv4();
           const defaultHash = AuthService.hashPassword("student123");
-          this.db.prepare(`
-            INSERT INTO users (id, username, password_hash, full_name, role, student_code, email, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          `).run(userId, p.username || `sv_${p.studentCode}`, defaultHash, p.fullName, "student", p.studentCode, p.email || null, new Date().toISOString());
+          insertUser.run(userId, p.username || `sv_${p.studentCode}`, defaultHash, p.fullName, "student", p.studentCode, p.email || null, new Date().toISOString());
         }
 
         insertParticipant.run(id, userId, p.examRoom || location, p.seatIp || null, p.hostname || null, p.variantCode || null, p.status || "not_submitted");
@@ -596,19 +612,21 @@ export class DatabaseService {
       INSERT OR REPLACE INTO session_participants (session_id, user_id, exam_room, seat_ip, hostname, variant_code, status)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
+    const findUser = this.db.prepare("SELECT id FROM users WHERE username = ? OR student_code = ?");
+    const insertUser = this.db.prepare(`
+      INSERT INTO users (id, username, password_hash, full_name, role, student_code, email, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
 
     const tx = this.db.transaction(() => {
       for (const p of participants) {
-        const userRow = this.db.prepare("SELECT id FROM users WHERE username = ? OR student_code = ?").get(p.username, p.studentCode) as any;
+        const userRow = findUser.get(p.username, p.studentCode) as any;
         let userId = userRow?.id;
 
         if (!userId) {
           userId = uuidv4();
           const defaultHash = AuthService.hashPassword("student123");
-          this.db.prepare(`
-            INSERT INTO users (id, username, password_hash, full_name, role, student_code, email, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          `).run(userId, p.username || `sv_${p.studentCode}`, defaultHash, p.fullName, "student", p.studentCode, p.email || null, new Date().toISOString());
+          insertUser.run(userId, p.username || `sv_${p.studentCode}`, defaultHash, p.fullName, "student", p.studentCode, p.email || null, new Date().toISOString());
         }
 
         insertParticipant.run(id, userId, p.examRoom || null, p.seatIp || null, p.hostname || null, p.variantCode || null, "not_submitted");
@@ -697,6 +715,36 @@ export class DatabaseService {
 
   getAllSubmissions(): SubmissionRecord[] {
     const rows = this.db.prepare("SELECT * FROM submissions ORDER BY created_at DESC").all() as any[];
+    return rows.map(row => ({
+      id: row.id,
+      labId: row.lab_id, 
+      lab_id: row.lab_id, // For frontend compatibility
+      mode: row.mode,
+      code: row.code,
+      language: row.language,
+      profileId: row.profile_id,
+      profile_id: row.profile_id, // For frontend compatibility
+      createdAt: row.created_at,
+      created_at: row.created_at, // For frontend compatibility
+      status: row.status,
+      score: row.score, // Added mapping
+      result: JSON.parse(row.result_json),
+      userId: row.user_id,
+      user_id: row.user_id,
+      clientIp: row.client_ip,
+      client_ip: row.client_ip,
+      hostname: row.hostname,
+      sessionId: row.session_id,
+      session_id: row.session_id, // For frontend compatibility
+      resultCode: row.result_code,
+      result_code: row.result_code,
+      gradedBy: row.graded_by,
+      graded_by: row.graded_by
+    } as any));
+  }
+
+  getSubmissionsBySession(sessionId: string): SubmissionRecord[] {
+    const rows = this.db.prepare("SELECT * FROM submissions WHERE session_id = ? ORDER BY created_at DESC").all(sessionId) as any[];
     return rows.map(row => ({
       id: row.id,
       labId: row.lab_id, 
@@ -818,31 +866,36 @@ export class DatabaseService {
       WHERE sp.session_id = ?
     `).all(sessionId) as any[];
 
-    for (const p of participants) {
-      const subs = this.db.prepare(`
-        SELECT score, status, result_code, lab_id
-        FROM submissions
-        WHERE session_id = ? AND user_id = ?
-      `).all(sessionId, p.user_id) as any[];
+    // Fetch all submissions of the session in a single query, sorted by creation time DESC
+    const allSubs = this.db.prepare(`
+      SELECT user_id, score, status, result_code, lab_id, created_at
+      FROM submissions
+      WHERE session_id = ?
+      ORDER BY created_at DESC
+    `).all(sessionId) as any[];
 
-      p.totalAttempts = subs.length;
+    // Group submissions by user_id in memory
+    const subsByUserId: Record<string, any[]> = {};
+    for (const sub of allSubs) {
+      if (!subsByUserId[sub.user_id]) {
+        subsByUserId[sub.user_id] = [];
+      }
+      subsByUserId[sub.user_id].push(sub);
+    }
+
+    for (const p of participants) {
+      const userSubs = subsByUserId[p.user_id] || [];
+      p.totalAttempts = userSubs.length;
       
       const solvedLabs = new Set<string>();
-      for (const s of subs) {
+      for (const s of userSubs) {
         if (s.score >= 50 || s.result_code === 'AC' || s.status === 'completed' || s.status === 'graded') {
           solvedLabs.add(s.lab_id);
         }
       }
       p.solvedCount = solvedLabs.size;
       
-      const lastSub = this.db.prepare(`
-        SELECT status, score, created_at, result_code
-        FROM submissions
-        WHERE session_id = ? AND user_id = ?
-        ORDER BY created_at DESC
-        LIMIT 1
-      `).get(sessionId, p.user_id) as any;
-
+      const lastSub = userSubs[0]; // First element is the latest submission
       if (lastSub) {
         p.lastSubmitStatus = lastSub.status;
         p.lastSubmitScore = lastSub.score;
