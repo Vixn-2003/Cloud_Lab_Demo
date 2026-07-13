@@ -264,7 +264,7 @@ export function SessionForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-card border-border text-foreground shadow-2xl">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col bg-card border-border text-foreground shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-foreground text-xl">
             {sessionToEdit ? 'Chỉnh sửa Ca thực hành' : 'Tạo Ca thực hành/thi mới'}
