@@ -316,3 +316,106 @@
 .score-failed {
   color: oklch(0.6 0.22 25);
 }
+
+/* --- LIGHT MODE COMPATIBILITY OVERRIDES --- */
+html:not(.dark) {
+  /* Surface and backgrounds overrides */
+  .bg-slate-950,
+  .bg-slate-950\/30,
+  .bg-slate-950\/40,
+  .bg-slate-950\/60,
+  .bg-slate-900,
+  .bg-slate-900\/60,
+  .bg-slate-900\/20,
+  .bg-slate-900\/10 {
+    background-color: var(--card) !important;
+  }
+
+  /* Border overrides */
+  .border-slate-800,
+  .border-slate-900,
+  .border-slate-700 {
+    border-color: var(--border) !important;
+  }
+
+  /* Specific dialog & dropdown content background overrides */
+  [class*="bg-slate-950"],
+  [class*="bg-slate-900"] {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Form input & textarea overrides */
+  input.bg-slate-900,
+  input.bg-slate-950,
+  textarea.bg-slate-900,
+  textarea.bg-slate-950,
+  select.bg-slate-900,
+  select.bg-slate-950,
+  [class*="bg-slate-900"] input,
+  [class*="bg-slate-950"] input,
+  [class*="bg-slate-900"] textarea,
+  [class*="bg-slate-950"] textarea {
+    background-color: var(--background) !important;
+    color: var(--foreground) !important;
+    border-color: var(--border) !important;
+  }
+
+  /* Monaco Editor background overrides in light mode */
+  .monaco-editor {
+    --vscode-editor-background: var(--background) !important;
+  }
+
+  /* Web terminal background/scrollbar */
+  .xterm-viewport::-webkit-scrollbar-thumb {
+    background: var(--border) !important;
+  }
+
+  /* Hardcoded text-white overrides (safeguarding colored buttons/badges) */
+  h1.text-white,
+  h2.text-white,
+  h3.text-white,
+  h4.text-white,
+  h5.text-white,
+  h6.text-white,
+  .text-white:not(button):not([class*="bg-primary"]):not([class*="bg-destructive"]):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-blue-"]):not([class*="bg-indigo-"]):not([class*="bg-success"]):not([class*="bg-warning"]):not(.badge):not(.Badge):not(.bg-gradient-to-r) {
+    color: var(--foreground) !important;
+  }
+
+  /* Stats numbers / big title text-white overrides */
+  div.text-white:not([class*="bg-primary"]):not([class*="bg-destructive"]):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-blue-"]):not([class*="bg-indigo-"]):not([class*="bg-success"]):not([class*="bg-warning"]),
+  span.text-white:not([class*="bg-primary"]):not([class*="bg-destructive"]):not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-blue-"]):not([class*="bg-indigo-"]):not([class*="bg-success"]):not([class*="bg-warning"]) {
+    color: var(--foreground) !important;
+  }
+
+  /* Hardcoded text-slate-400 / text-slate-500 muted text overrides */
+  .text-slate-400,
+  .text-slate-500 {
+    color: var(--muted-foreground) !important;
+  }
+
+  /* Hardcoded text-slate-300 / text-slate-100 readable text overrides */
+  .text-slate-300,
+  .text-slate-100 {
+    color: var(--foreground) !important;
+  }
+
+  /* Table head and cell texts */
+  td.text-white,
+  th.text-white {
+    color: var(--foreground) !important;
+  }
+
+  /* Hover states */
+  .hover\:text-white:hover {
+    color: var(--foreground) !important;
+  }
+
+  .hover\:bg-slate-900:hover {
+    background-color: var(--accent) !important;
+  }
+
+  .hover\:bg-slate-900\/60:hover {
+    background-color: var(--accent) !important;
+  }
+}

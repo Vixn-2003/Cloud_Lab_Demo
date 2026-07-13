@@ -32,3 +32,11 @@
   - [x] Cập nhật gọi API và loại bỏ client-side filtering ở frontend trong [api.ts](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/lib/api.ts) và trang chấm điểm [page.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/%5Blocale%5D/grading/page.tsx).
   - [x] Kiểm thử và chạy thành công 100% bộ kiểm thử tự động của hệ thống.
 
+- [x] **Hỗ trợ Giao diện Sáng (Light Mode)**
+  - [x] Cấu hình lại `globals.css` để hỗ trợ cả `:root` (Light Mode) và `.dark` (Dark Mode).
+  - [x] Tích hợp `ThemeProvider` vào layout gốc `layout.tsx` và cấu hình thuộc tính `suppressHydrationWarning`.
+  - [x] Xây dựng component `ThemeSwitcher` chuyển đổi linh hoạt bằng `next-themes`.
+  - [x] Tích hợp bộ chuyển đổi giao diện vào Sidebar Footer ở chế độ đầy đủ và thu gọn.
+  - [x] Bổ sung các bản dịch đa ngôn ngữ tương ứng (`theme`) trong `vi.json` và `en.json`.
+
+
