@@ -331,16 +331,30 @@ html:not(.dark) {
     background-color: var(--card) !important;
   }
 
+  /* Secondary / Muted backgrounds overrides */
+  .bg-slate-800,
+  .bg-slate-800\/80,
+  .bg-slate-800\/60,
+  .bg-slate-800\/40,
+  .bg-slate-800\/20,
+  .bg-slate-700,
+  .bg-slate-700\/50,
+  .bg-slate-700\/20 {
+    background-color: var(--secondary) !important;
+  }
+
   /* Border overrides */
   .border-slate-800,
   .border-slate-900,
-  .border-slate-700 {
+  .border-slate-700,
+  .border-slate-600 {
     border-color: var(--border) !important;
   }
 
   /* Specific dialog & dropdown content background overrides */
   [class*="bg-slate-950"],
-  [class*="bg-slate-900"] {
+  [class*="bg-slate-900"],
+  [class*="bg-slate-800"] {
     background-color: var(--card) !important;
     border-color: var(--border) !important;
   }
