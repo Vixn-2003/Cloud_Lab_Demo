@@ -35,9 +35,10 @@ Toàn bộ các tác vụ tối ưu hóa hiệu năng và tích hợp chế đ�
 * **Khắc phục tương phản chữ và nền**: Bổ sung bộ quy tắc ghi đè thông minh trong CSS toàn cục để tự động chuyển đổi chữ trắng `text-white` sang chữ tối `text-foreground` ở chế độ Light Mode (ngoại trừ các nút bấm màu để tránh mất chữ). Đồng thời chuyển đổi các khung xám tối cứng (`bg-slate-900`, `bg-slate-950`) sang màu của nền sáng.
 * **Đồng bộ hóa trang Đăng nhập**: Thiết kế lại toàn bộ mã nguồn trang Đăng nhập để sử dụng 100% lớp màu thích ứng động (Semantic Classes) thay vì các lớp cứng.
 * **Tính năng Ẩn/Hiện mật khẩu**: Tích hợp nút bật tắt xem mật khẩu (Eye/EyeOff) tại ô nhập liệu Password của trang Đăng nhập, giúp người dùng dễ dàng kiểm tra tính chính xác của mật khẩu trước khi gửi.
-* **Tái thiết kế hộp thoại Tạo ca thực hành ([session-form.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/components/session-form.tsx))**:
-  * Tăng chiều rộng Dialog từ `max-w-3xl` lên hẳn `max-w-6xl` và giới hạn chiều cao tối đa `max-h-[90vh]` giúp bố cục form vô cùng thoáng đãng, rộng rãi và dễ theo dõi lượng thông tin lớn.
-  * Cấu hình lại thanh Tab Trigger từ dạng lưới cứng `grid grid-cols-4` sang dạng `flex w-full` kết hợp thuộc tính `flex-1 min-w-0` và thẻ `span` chứa text có lớp `.truncate` giúp ngăn chặn triệt để hiện tượng tràn và đè chữ lên nhau.
-  * Sử dụng 100% các lớp màu thích ứng động (như `bg-card`, `bg-muted/50`, `border-border`, `text-foreground`) thay cho các lớp xám tối cứng để hộp thoại hiển thị sang trọng trên cả giao diện sáng và tối.
+* **Tái thiết kế & Chuyển đổi sang trang nội bộ chiều sâu (Drill-down full-page) cho việc Tạo/Sửa ca thực hành ([session-form.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/components/session-form.tsx) & [page.tsx](file:///e:/Workspace/WorkJob/MR_Cong_AI/Demo_Platform/project/frontend/app/%5Blocale%5D/sessions/page.tsx))**:
+  * Loại bỏ hoàn toàn hộp thoại Dialog popup đè giữa màn hình gây chật chội. Thay vào đó, khi nhấn Tạo ca hoặc Chỉnh sửa, hệ thống sẽ thực hiện inline transition chuyển tiếp sang chế độ Drill-down (Trang con chuyên dụng) chiếm toàn bộ diện tích workspace chính.
+  * Tích hợp điều hướng Breadcrumb nhỏ gọn ở đầu trang (`Quản lý ca thi > Tạo ca thực hành mới / Chỉnh sửa ca thi`) giúp quay lại danh sách cực kỳ dễ dàng.
+  * Cấu hình lại thanh Tab Trigger từ dạng lưới cứng sang `flex w-full` cùng lớp `.truncate` trên text, ngăn chặn hoàn toàn hiện tượng tràn và đè chữ.
+  * Sử dụng 100% các lớp màu thích ứng động (`bg-card`, `bg-muted/50`, `border-border`, `text-foreground`) thay cho các lớp xám tối cứng để giao diện hoàn mỹ trên cả Light/Dark Mode.
 
 
