@@ -43,7 +43,7 @@ export default function SessionsPage() {
 
   const [sessions, setSessions] = useState<PracticeSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
   const [editingSession, setEditingSession] = useState<PracticeSession | null>(null);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
 
@@ -68,7 +68,7 @@ export default function SessionsPage() {
 
   const handleEdit = (session: PracticeSession) => {
     setEditingSession(session);
-    setFormOpen(true);
+    setView('form');
   };
 
   const handleDeleteConfirm = async () => {
@@ -143,6 +143,29 @@ export default function SessionsPage() {
     }
   };
 
+  if (view === 'form') {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1 select-none">
+          <span className="hover:underline cursor-pointer transition-all" onClick={() => setView('list')}>Quản lý ca thi</span>
+          <span className="text-muted-foreground/60">&gt;</span>
+          <span className="text-foreground font-medium">{editingSession ? 'Chỉnh sửa ca thi' : 'Tạo ca thực hành mới'}</span>
+        </div>
+        <SessionForm
+          isPage={true}
+          sessionToEdit={editingSession}
+          onSuccess={() => {
+            fetchSessions();
+            setView('list');
+          }}
+          onCancel={() => {
+            setView('list');
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6 animate-fade-in-up">
       {/* Header Area */}
@@ -159,9 +182,9 @@ export default function SessionsPage() {
         <Button
           onClick={() => {
             setEditingSession(null);
-            setFormOpen(true);
+            setView('form');
           }}
-          className="bg-gradient-to-r from-primary to-[oklch(0.6_0.22_290)] text-white hover:opacity-90 gap-2 w-fit shadow-lg shadow-primary/20"
+          className="bg-gradient-to-r from-primary to-[oklch(0.6_0.22_290)] text-white hover:opacity-90 gap-2 w-fit shadow-lg shadow-primary/20 cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           {t('createSession') || 'Tạo ca thực hành'}
@@ -299,13 +322,7 @@ export default function SessionsPage() {
         </CardContent>
       </Card>
 
-      {/* Session Creation/Edit Modal */}
-      <SessionForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        sessionToEdit={editingSession}
-        onSuccess={fetchSessions}
-      />
+      {/* Session Creation/Edit full-page form placeholder, handled by view state switcher above */}
 
       {/* Deletion Dialog */}
       <AlertDialog
