@@ -30,3 +30,9 @@ Toàn bộ các tác vụ tối ưu hóa hiệu năng và tích hợp chế đ�
 
 - **Biên dịch dự án (Build)**: Chạy `npm run build` trên frontend thành công 100%, không gặp lỗi TypeScript hay biên dịch tĩnh nào.
 - **Kiểm thử tự động (Automation Tests)**: Toàn bộ 10 file kiểm thử tích hợp tự động đều đã chạy và vượt qua thành công với điểm số tối đa **PASS ✅**.
+
+### 1.3 Khắc phục tương phản Light Mode & Tính năng Ẩn/Hiện Mật khẩu (Mới bổ sung)
+* **Khắc phục tương phản chữ và nền**: Bổ sung bộ quy tắc ghi đè thông minh trong CSS toàn cục để tự động chuyển đổi chữ trắng `text-white` sang chữ tối `text-foreground` ở chế độ Light Mode (ngoại trừ các nút bấm màu để tránh mất chữ). Đồng thời chuyển đổi các khung xám tối cứng (`bg-slate-900`, `bg-slate-950`) sang màu của nền sáng.
+* **Đồng bộ hóa trang Đăng nhập**: Thiết kế lại toàn bộ mã nguồn trang Đăng nhập để sử dụng 100% lớp màu thích ứng động (Semantic Classes) thay vì các lớp cứng.
+* **Tính năng Ẩn/Hiện mật khẩu**: Tích hợp nút bật tắt xem mật khẩu (Eye/EyeOff) tại ô nhập liệu Password của trang Đăng nhập, giúp người dùng dễ dàng kiểm tra tính chính xác của mật khẩu trước khi gửi.
+

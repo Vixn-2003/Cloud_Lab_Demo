@@ -38,5 +38,7 @@
   - [x] Xây dựng component `ThemeSwitcher` chuyển đổi linh hoạt bằng `next-themes`.
   - [x] Tích hợp bộ chuyển đổi giao diện vào Sidebar Footer ở chế độ đầy đủ và thu gọn.
   - [x] Bổ sung các bản dịch đa ngôn ngữ tương ứng (`theme`) trong `vi.json` và `en.json`.
+  - [x] Khắc phục lỗi tương phản chữ trắng (`text-white`) và nền tối cứng trên giao diện chính và các trang tính năng khi bật Light Mode.
+  - [x] Tích hợp tính năng Ẩn/Hiện mật khẩu (Show/Hide Password toggle) bằng các biểu tượng Eye/EyeOff của `lucide-react` trong trang Đăng nhập để tăng tính tiện dụng (UX).
 
 
