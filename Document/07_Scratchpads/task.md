@@ -40,5 +40,6 @@
   - [x] Bổ sung các bản dịch đa ngôn ngữ tương ứng (`theme`) trong `vi.json` và `en.json`.
   - [x] Khắc phục lỗi tương phản chữ trắng (`text-white`) và nền tối cứng trên giao diện chính và các trang tính năng khi bật Light Mode.
   - [x] Tích hợp tính năng Ẩn/Hiện mật khẩu (Show/Hide Password toggle) bằng các biểu tượng Eye/EyeOff của `lucide-react` trong trang Đăng nhập để tăng tính tiện dụng (UX).
+  - [x] Tái thiết kế giao diện hộp thoại Tạo/Sửa ca thực hành rộng rãi hơn (max-w-4xl), sửa triệt để lỗi đè/chèn văn bản trên các Tab và áp dụng màu sắc thích ứng Light/Dark Mode đồng bộ.
 
 
